@@ -143,13 +143,13 @@ const deleteUserAndData = async (req, res) => {
 
     const deletedUser = await User.deleteOne({ _id: userID });
     const deletedGalleries = await Gallery.deleteMany({ userId: userID });
-    // const deletedLooks = await Looks.deleteMany({ userId: userID });
+    const deletedLooks = await Looks.deleteMany({ userId: userID });
 
     res.status(200).json({
       message: 'User and related data successfully deleted',
       deletedUser: deletedUser.deletedCount,
       deletedGalleries: deletedGalleries.deletedCount,
-      // deletedLooks: deletedLooks.deletedCount
+      deletedLooks: deletedLooks.deletedCount
     });
   } catch (err) {
     console.error(err);

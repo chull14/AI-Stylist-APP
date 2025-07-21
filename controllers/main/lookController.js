@@ -4,7 +4,7 @@ import Look from '../../models/Look.js';
 
 // Get all the looks the user has saved 
 const getAllLooks = async (req, res) => {
-  const userID = req.params.userId;
+  const userID = req.user.id;
 
   try {
     const user = await User.findById(userID)
@@ -23,7 +23,7 @@ const getAllLooks = async (req, res) => {
 // Get one user look
 const getLook = async (req, res) => {
   try {
-    const userID = req.params.userId;
+    const userID = req.user.id;
     const { lookId } = req.params;
 
     const look = await Look.findById(lookId).exec();
@@ -50,14 +50,8 @@ const getLook = async (req, res) => {
 
 // Update a look (notes, tags, aesthetic)
 const updateLook = async (req, res) => {
-  const userID = req.user.id;
-  const { lookID } = req.params;
-
   try {
-    const look = await Look.findById(lookID).exec();
-    if (!look) return res.status(404).json({ message: 'Look not found' });
-
-    if (String(look.userId) !== userID) return res.status(404).json({ message: 'You are not authorized to edit this look' });
+    const look = req.look;
 
     const allowedFields = ['title', 'aesthetic', 'tags', 'notes', 'galleryId'];
     allowedFields.forEach(field => {
@@ -68,7 +62,10 @@ const updateLook = async (req, res) => {
 
     await look.save();
 
-    res.status(200).json({ message: 'Look updated successfully' });
+    res.status(200).json({ 
+      message: 'Look updated successfully',
+      look: look 
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Server Error' });
@@ -122,29 +119,26 @@ const createSingleLook = async (req, res) => {
 const createMultipleLooks = async (req, res) => {
   try {
     const userID = req.user.id;
-    const { 
-      title,
-      aesthetic,
-      tags,
-      notes,
-      galleryId,
-      sourceType
-    } = req.body;
     
     if (!req.files || req.files.length === 0) return res.status(400).json({ message: 'At least one image is required' });
 
-    const looksToInsert = req.files.map(file => ({
-      userId: userID,
-      title: title,
-      aesthetic: aesthetic,
-      notes: notes,
-      tags: tags ? tags.split(',') : [],
-      galleryId: galleryId || null,
-      sourceType: sourceType
-    }));
+    const metadata = req.body.metadata ? JSON.parse(req.body.metadata) : [];
 
-    const newLooks = await Look.insertMany(looksToInsert).exec();
+    const looksToInsert = req.files.map((file, index) => {
+      const data = metadata[index] || {}; // default to empty if no metadata
+      return {
+        userId: userID,
+        imagePath: file.path,
+        title: data.title || req.body.title || '',
+        aesthetic: data.aesthetic || req.body.aesthetic || '',
+        notes: data.notes || req.body.notes || '',
+        tags: data.tags ? data.tags.split(',') : (req.body.tags ? req.body.tags.split(',') : []),
+        galleryId: req.body.galleryId || null,
+        sourceType: req.body.sourceType || 'upload'
+      };
+    });
 
+    const newLooks = await Look.insertMany(looksToInsert);
     const lookIds = newLooks.map(look => look._id);
 
     await User.findByIdAndUpdate(userID, {
@@ -157,6 +151,13 @@ const createMultipleLooks = async (req, res) => {
     });
   } catch (err) {
     console.error(err);
+
+    if (req.files) {
+      for (const file of req.files) {
+        await fs.unlink(file.path).catch(() => {}); // silently ignore errors
+      }
+    }
+
     res.status(500).json({ message: 'Error uploading mutliple looks' }); 
   }
 }
@@ -164,17 +165,21 @@ const createMultipleLooks = async (req, res) => {
 // Delete a look
 const deleteLook = async (req, res) => {
   const userID = req.user.id;
-  const lookID = req.params.lookId;
-  if (!lookID) return res.status(400).json({ message: 'LookID is required' });
-  try {
-    const look = await Look.findOne({ _id: lookID, userId: userID }).exec();
-    if (!look) return res.status(404).json({ message: 'Look not found for this user' });
+  const look = req.look;
+  const lookID = look._id;
 
+  try {
     const deletedLook = await Look.deleteOne({ _id: lookID }).exec();
 
     await User.findByIdAndUpdate(userID, {
-      $pull: { myLooks: lookID, closet: lookID }
+      $pull: { myLooks: lookID }
     }).exec();
+
+    if (look.galleryId) {
+      await Gallery.findByIdAndUpdate(look.galleryId, {
+        $pull: { looks: lookID }
+      }).exec();
+    }
 
     if (deletedLook.deletedCount === 0) return res.status(500).json({ message: 'Failed to delete the look' });
 

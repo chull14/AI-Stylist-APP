@@ -22,3 +22,8 @@
 20250711	19:05:15	be04c3d9-3180-4505-ae94-0ece6ca9ad76	ReferenceError: userIdFromParams is not defined
 20250716	12:29:51	429d5b4f-75cf-434f-bfb2-5835df2d55b8	Error: ENOENT: no such file or directory, open 'uploads/1752683391491-testlook.avif'
 20250716	12:31:14	c9a5f687-d9d7-4d92-b76d-b67b44474644	TypeError: Cannot read properties of undefined (reading 'id')
+20250721	19:27:50	a1dc3c64-b189-4d45-acf1-c3532c4bcc67	MulterError: Unexpected field
+20250721	19:30:26	c408ff9f-af19-4cd3-8cb7-2ed355addc68	MulterError: Unexpected field
+20250721	19:30:29	eb46f495-140a-4fe6-8257-78576e54b306	MulterError: Unexpected field
+20250721	19:37:27	e9046340-2b07-4a2f-ada4-7f21b5c09b27	MulterError: Unexpected field
+20250721	19:41:34	ea935e89-8634-4047-8a46-5f97210e1c6e	TypeError: Cannot destructure property 'username' of 'req.body' as it is undefined.

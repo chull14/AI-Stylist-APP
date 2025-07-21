@@ -19,6 +19,6 @@ router.route('/')
 router.route('/:id')
   .get(verifyJWT, userController.getUser) // Get specific user
   .put(verifyJWT,userController.updateUser) // Update user info
-  .delete(verifyJWT,userController.deleteUserAndData); // Delete user and user info
+  .delete(userController.deleteUserAndData); // Delete user and user info
 
 export default router;
