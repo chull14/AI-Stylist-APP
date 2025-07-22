@@ -1,14 +1,9 @@
-import User from '../../models/User.js';
 import Gallery from '../../models/Gallery.js';
 import Look from '../../models/Look.js';
 
 // Get all user galleries 
 const getAllGalleries = async (req, res) => {
-  const userID = req.params.userId;
-
-  if (!userID) {
-    return res.status(400).json({ message: 'User ID is required' });
-  }
+  const userID = req.user.id;
 
   try {
     const galleries = await Gallery.find({ userId: userID }).exec();
@@ -23,16 +18,11 @@ const getAllGalleries = async (req, res) => {
 
 // Get one user gallery
 const getGallery = async (req, res) => {
-  const userID = req.params.userId;
-  const galleryID = req.params.galleryId;
-
-  if (!userID || !galleryID) return res.status(400).json({ message: 'UserID and GalleryID are required' });
+  const userID = req.user.id;
 
   try {
-    const gallery = await Gallery.findOne({ _id: galleryID, userId: userID }).exec();
-    if (!gallery) return res.status(404).json({ message: 'Gallery not found for this user' });
-
-    const looks = await Look.find({ userId: userID, galleryId: galleryID }).exec();
+    const gallery = req.gallery;
+    const looks = await Look.find({ userId: userID, galleryId: gallery._id }).exec();
 
     res.status(200).json({
       message: "Gallery looks successfully retrieved",
@@ -49,11 +39,7 @@ const getGallery = async (req, res) => {
 
 // Create a gallery
 const createGallery = async (req, res) => {
-  const userID = req.params.userId;
-
-  if (!userID) {
-    return res.status(400).json({ message: 'User ID is required' });
-  }
+  const userID = req.user.id;
   const { title, description } = req.body;
 
   try {
@@ -76,15 +62,9 @@ const createGallery = async (req, res) => {
 
 // Update gallery
 const updateGallery = async (req, res) => {
-  const userID = req.params.userId;
-  const galleryID = req.params.galleryId;
-  if (!userID || !galleryID) return res.status(400).json({ message: 'UserID and GalleryID are required' });
-
-  const { title, description } = req.body;
-
   try {
-    const gallery = await Gallery.findOne({ _id: galleryID, userId: userID }).exec();
-    if (!gallery) return res.status(404).json({ message: 'Gallery not found for this user' });
+    const gallery = req.gallery;
+    const { title, description } = req.body;
 
     if (title) gallery.title = title;
     if (description) gallery.description = description;
@@ -102,15 +82,9 @@ const updateGallery = async (req, res) => {
 
 // Delete gallery
 const deleteGallery = async (req, res) => {
-  const userID = req.params.userId;
-  const galleryID = req.params.galleryId;
-  if (!userID || !galleryID) return res.status(400).json({ message: 'UserID and GalleryID are required' });
-
   try {
-    const gallery = await Gallery.findOne({ _id: galleryID, userId: userID }).exec();
-    if (!gallery) return res.status(404).json({ message: 'Gallery not found for this user' });
-
-    const deletedGallery = await Gallery.deleteOne({ _id: galleryID }).exec();
+    const gallery = req.gallery;
+    const deletedGallery = await Gallery.deleteOne({ _id: gallery._id }).exec();
 
     if (deletedGallery.deletedCount === 0) {
       return res.status(500).json({ message: 'Failed to delete gallery' });
@@ -123,31 +97,11 @@ const deleteGallery = async (req, res) => {
   }
 }
 
-const addLookToGallery = async (req, res) => {
-  const { lookID, galleryID } = req.params;
-  const userID = req.user.id;
-
-  try {
-    const look = await Look.findById(lookID).exec();
-    if (!look || String(look.userId) !== userID) {
-      return res.status(403).json({ message: 'You can only acces your own looks' });
-    }
-
-    look.galleryId = galleryID;
-    await look.save();
-
-    res.status(200).json({ message: 'Look successfully moved to gallery' });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Server Error' });  
-  }
-}
 
 export default { 
   getAllGalleries,
   getGallery,
   createGallery,
   updateGallery,
-  deleteGallery,
-  addLookToGallery
+  deleteGallery
 }

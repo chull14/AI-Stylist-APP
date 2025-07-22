@@ -1,4 +1,4 @@
-import Gallery from '../models/Gallery.js';
+import Gallery from '../../models/Gallery.js';
 
 const verifyGalleryOwnership = async (req, res, next) => {
   const userId = req.user.id;

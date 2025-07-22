@@ -32,3 +32,10 @@
 20250721	23:04:53	1516464d-282e-4630-a754-341e18851868	TypeError: Cannot read properties of undefined (reading 'id')
 20250721	23:05:14	2eb62ece-6d82-4d2b-8c0a-04e7ae309720	TypeError: Cannot read properties of undefined (reading 'id')
 20250721	23:05:16	7769ca46-5048-4647-9119-0cdcd58766f6	TypeError: Cannot read properties of undefined (reading 'id')
+20250722	12:45:32	d846971d-a6df-4904-bf6f-154ed911436b	TypeError: Cannot destructure property 'title' of 'req.body' as it is undefined.
+20250722	12:46:28	22824345-89c9-4acb-9bfb-f549cb1bd6aa	TypeError: Cannot destructure property 'title' of 'req.body' as it is undefined.
+20250722	12:46:52	7c542d7d-f4ab-4d24-9842-ff04b570a0ae	TypeError: Cannot destructure property 'title' of 'req.body' as it is undefined.
+20250722	12:46:53	0ad934ae-120c-4a41-8426-c24d078d7031	TypeError: Cannot destructure property 'title' of 'req.body' as it is undefined.
+20250722	12:47:22	13a3dea1-7e39-45a2-a62e-cf6081f16536	TypeError: Cannot destructure property 'title' of 'req.body' as it is undefined.
+20250722	12:47:27	c2215840-3e22-4161-b216-1e8e49e56255	TypeError: Cannot destructure property 'title' of 'req.body' as it is undefined.
+20250722	12:56:13	6a229983-fbd7-46eb-9c8c-b5b01c4ea1a3	TypeError: Cannot read properties of undefined (reading 'id')

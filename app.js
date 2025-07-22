@@ -27,18 +27,15 @@ app.use(logger);
 app.use(express.json());
 
 // middleware for cookies
-// app.use(cookieParser());
+app.use(cookieParser());
 
-// routes
+// auth routes
 app.use('/api', authRoutes);
 
-
 // verified routes
-// app.use(verifyJWT);
 app.use('/api/users', userRoutes);
-app.use('/api/users/:userId/galleries', galleryRoutes);
+app.use('/api/users', galleryRoutes);
 app.use('/api/users', lookRoutes);
-
 
 app.use(errorHandler);
 
