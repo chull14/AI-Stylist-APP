@@ -1,7 +1,7 @@
 import express from 'express';
 import userController from '../../controllers/main/userController.js';
 import ROLES_LIST from '../../config/roles_list.js';
-import verifyRoles from '../../middleware/verifyRoles.js';
+// import verifyRoles from '../../middleware/verifyRoles.js';
 import verifyJWT from '../../middleware/verifyJWT.js';
 import verifyUser from '../../middleware/verifyID/verifyUser.js';
 
