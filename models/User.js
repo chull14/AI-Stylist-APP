@@ -49,10 +49,6 @@ const userSchema = new Schema({
     type: mongoose.Schema.Types.ObjectId, 
     ref: 'Look' 
   }],
-  favorites: [{ 
-    type: mongoose.Schema.Types.ObjectId, 
-    ref: 'Look' 
-  }]
 }, { timestamps: true });
 
 const User = mongoose.model('User', userSchema);

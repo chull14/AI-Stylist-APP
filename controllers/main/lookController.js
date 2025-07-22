@@ -24,14 +24,11 @@ const getAllLooks = async (req, res) => {
 const getLook = async (req, res) => {
   try {
     const userID = req.user.id;
-    const { lookId } = req.params;
+    const look = req.look;
+    const user = await User.findById(userID).select('myLooks').exec();
 
-    const look = await Look.findById(lookId).exec();
-    if (!look) return res.status(404).json({ message: 'Look not found' });
-
-    const user = await User.findById(userID).exec();
-    const ownsLook = user.myLooks.includes(lookId);
-
+    const ownsLook = user.myLooks.some(id => String(id) === String(look._id));
+    
     if (ownsLook) return res.status(200).json({ look });
 
     if (look.galleryId) {
