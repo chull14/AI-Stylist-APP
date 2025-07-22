@@ -27,3 +27,8 @@
 20250721	19:30:29	eb46f495-140a-4fe6-8257-78576e54b306	MulterError: Unexpected field
 20250721	19:37:27	e9046340-2b07-4a2f-ada4-7f21b5c09b27	MulterError: Unexpected field
 20250721	19:41:34	ea935e89-8634-4047-8a46-5f97210e1c6e	TypeError: Cannot destructure property 'username' of 'req.body' as it is undefined.
+20250721	23:02:54	6a164fe0-1988-4516-8846-3c0b523a98ce	TypeError: Cannot read properties of undefined (reading 'id')
+20250721	23:03:27	7373fa93-118a-49ef-8f5c-6de85fbea449	TypeError: Cannot read properties of undefined (reading 'id')
+20250721	23:04:53	1516464d-282e-4630-a754-341e18851868	TypeError: Cannot read properties of undefined (reading 'id')
+20250721	23:05:14	2eb62ece-6d82-4d2b-8c0a-04e7ae309720	TypeError: Cannot read properties of undefined (reading 'id')
+20250721	23:05:16	7769ca46-5048-4647-9119-0cdcd58766f6	TypeError: Cannot read properties of undefined (reading 'id')

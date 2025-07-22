@@ -42,15 +42,7 @@ const getAllUsers = async (req, res) => {
 
 // Get user
 const getUser = async (req, res) => {
-  if (!req?.params?.id) return res.status(400).json({ message: 'User ID required' });
-
-  const userID = req.params.id;
-  const tokenID = req.userId;
-
-  if (userID !== tokenID ) {
-    return res.status(403).json({ message: 'Forbidden: Not authorized to access this user' });
-  }
-
+  const userID = req.user.id;
   const user = await User.findById(userID).select('username email').exec();
 
   if (!user) {
@@ -65,41 +57,9 @@ const getUser = async (req, res) => {
   });
 }
 
-// // Create user
-// const createUser = async (req, res) => {
-//   const { username, email, pwd } = req.body;
-//   if (!username || !email || !pwd) return res.status(400).json({ message: 'Username, Email, and Password are required.' });
-
-//   // check duplicate email or username
-//   const dupEmail = await User.findOne({ email: email }).exec();
-//   const dupUsername = await User.findOne({ username: username }).exec();
-
-//   if (dupEmail) return res.status(409).json({ "message": "Account with this email already exists" });
-//   if (dupUsername) return res.status(409).json({ "message": "Account with this username already exists" });
-
-//   try {
-//     const hashedPwd = await bcrypt.hash(pwd, 10);
-
-//     const newUser = await User.create({
-//       "username": username.trim(),
-//       "email": email.toLowerCase().trim(),
-//       "password": hashedPwd
-//     });
-
-//     res.status(201).json({ 
-//       message: 'New user created', 
-//       userId: newUser._id
-//     });
-//   } catch (err) {
-//     res.status(500).json({ message: err.message });
-//   }
-// }
-
 // Update user
 const updateUser = async (req, res) => {
-  if (!req?.params?.id) return res.status(400).json({ message: 'User ID required' });
-
-  const userID = req.params.id;
+  const userID = req.user.id;
   const user = await User.findById(userID).select('+password').exec();
   if (!user) {
     return res.status(404).json({ message: `No user matches ID ${userID}` });
@@ -127,9 +87,7 @@ const updateUser = async (req, res) => {
 
 // Delete user
 const deleteUserAndData = async (req, res) => {
-  if (!req?.params?.id) return res.status(400).json({ message: 'User ID required' });
-
-  const userID = req.params.id;
+  const userID = req.user.id;
 
   try {
     const user = await User.findById(userID).exec();
