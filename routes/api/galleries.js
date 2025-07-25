@@ -6,13 +6,15 @@ import verifyGallery from '../../middleware/verifyID/verifyGallery.js';
 
 const router = express.Router({ mergeParams: true });
 
-router.route('/:userId/galleries')
-    .get(verifyJWT, verifyUser, galleryController.getAllGalleries) // Get all user galleries
-    .post(verifyJWT, verifyUser, galleryController.createGallery); // Create new gallery 
+// path - /api/users/:userId/galleries
+router.route('/')
+    .get(verifyJWT, verifyUser, galleryController.getAllGalleries) // get all user galleries
+    .post(verifyJWT, verifyUser, galleryController.createGallery); // create a new gallery 
 
-router.route('/:userId/galleries/:galleryId')
-    .get(verifyJWT, verifyUser, verifyGallery, galleryController.getGallery) // Get specific gallery's looks
-    .put(verifyJWT, verifyUser, verifyGallery, galleryController.updateGallery) // Update a gallery
-    .delete(verifyJWT, verifyUser, verifyGallery, galleryController.deleteGallery); // Delete a gallery
+// path - /api/users/:userId/galleries/:galleryId
+router.route('/:galleryId')
+    .get(verifyJWT, verifyUser, verifyGallery, galleryController.getGallery) // get a gallery look
+    .put(verifyJWT, verifyUser, verifyGallery, galleryController.updateGallery) // update a gallery
+    .delete(verifyJWT, verifyUser, verifyGallery, galleryController.deleteGallery); // delete a gallery
 
 export default router;

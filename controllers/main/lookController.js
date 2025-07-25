@@ -51,9 +51,16 @@ const updateLook = async (req, res) => {
     const look = req.look;
 
     const allowedFields = ['title', 'aesthetic', 'tags', 'notes', 'galleryId'];
+    const arrayFields = ['aesthetic', 'tags'];
     allowedFields.forEach(field => {
       if (req.body[field] !== undefined) {
-        look[field] = req.body[field];
+        if (arrayFields.includes(field)) {
+          look[field] = Array.isArray(req.body[field])
+            ? req.body[field]
+            : req.body[field].split(',');
+        } else {
+          look[field] = req.body[field];
+        }
       }
     });
 
@@ -89,7 +96,7 @@ const createSingleLook = async (req, res) => {
     const newLook = new Look({
       userId: userID,
       title: title,
-      aesthetic: aesthetic,
+      aesthetic: aesthetic ? aesthetic.split(',') : [],
       notes: notes,
       tags: tags ? tags.split(',') : [],
       galleryId: galleryId || null,
@@ -104,7 +111,7 @@ const createSingleLook = async (req, res) => {
     }).exec();
 
     res.status(201).json({
-      message: 'Look created and added to your profile!',
+      message: 'Look created and added to your profile',
       look: newLook
     });
   } catch (err) {
@@ -127,7 +134,7 @@ const createMultipleLooks = async (req, res) => {
         userId: userID,
         imagePath: file.path,
         title: data.title || req.body.title || '',
-        aesthetic: data.aesthetic || req.body.aesthetic || '',
+        aesthetic: data.aesthetic ? data.aesthetic.split(',') : (req.body.aesthetic ? req.body.aesthetic.split(',') : []),
         notes: data.notes || req.body.notes || '',
         tags: data.tags ? data.tags.split(',') : (req.body.tags ? req.body.tags.split(',') : []),
         galleryId: req.body.galleryId || null,

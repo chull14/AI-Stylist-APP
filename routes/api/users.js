@@ -7,14 +7,14 @@ import verifyUser from '../../middleware/verifyID/verifyUser.js';
 
 const router = express.Router();
 
-// Get all users
-router.route('/all').get(userController.getAllUsers); 
+//path - /api/users/all
+router.route('/all').get(userController.getAllUsers); // Get all users
 
-// Get user profile
-router.route('/:userId/profile').get(verifyJWT, verifyUser, userController.getProfile);
+// path - /api/users/profile
+router.route('/profile').get(verifyJWT, verifyUser, userController.getProfile); // Get user profile
 
-// userID routes
-router.route('/:userId')
+// path - /api/users/:userId
+router.route('/')
   .get(verifyJWT, verifyUser, userController.getUser) // Get specific user
   .put(verifyJWT, verifyUser, userController.updateUser) // Update user info
   .delete(verifyJWT, verifyUser, userController.deleteUserAndData); // Delete user and user info

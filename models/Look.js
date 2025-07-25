@@ -14,28 +14,21 @@ const lookSchema = new Schema({
   },
 
   title: { type: String },
-  imagePath: { 
-    type: String, 
-    required: true 
-  },
-  aesthetic: {
-    type: String
-  },
+  imagePath: { type: String },
+  aesthetic: [String],
   tags: [String],
-  notes: { 
-    type: String 
-  }, 
+  notes: { type: String }, 
 
   sourceType: { 
     type: String, 
-    enum: ['upload', 'AI'], 
-    default: 'upload' 
+    enum: ['upload', 'saved', 'AI'], 
+    default: 'saved' 
   },
 
-  savedBy: { 
+  savedBy: [{ 
     type: mongoose.Schema.Types.ObjectId, 
     ref: 'User' 
-  },
+  }],
 }, { timestamps: true });
 
 const Look = mongoose.model('Look', lookSchema);

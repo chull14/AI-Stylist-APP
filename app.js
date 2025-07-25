@@ -10,6 +10,7 @@ import authRoutes from './routes/api/auth.js';
 import userRoutes from './routes/api/users.js';
 import galleryRoutes from './routes/api/galleries.js';
 import lookRoutes from './routes/api/looks.js';
+import closetRoutes from './routes/api/closet.js';
 const PORT = process.env.PORT || 8000;
 
 connectDB();
@@ -33,9 +34,10 @@ app.use(cookieParser());
 app.use('/api', authRoutes);
 
 // verified routes
-app.use('/api/users', userRoutes);
-app.use('/api/users', galleryRoutes);
-app.use('/api/users', lookRoutes);
+app.use('/api/users/:userId', userRoutes);
+app.use('/api/users/:userId/galleries', galleryRoutes);
+app.use('/api/users/:userId/looks', lookRoutes);
+app.use('/api/users/:userId/closet', closetRoutes);
 
 app.use(errorHandler);
 
