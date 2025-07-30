@@ -5,7 +5,8 @@
   "main": "app.js",
   "scripts": {
     "start": "node app",
-    "dev": "node --watch --env-file=.env app"
+    "dev": "node --watch --env-file=.env app",
+    "build:dev": "vite build --mode development"
   },
   "keywords": [],
   "author": "",
