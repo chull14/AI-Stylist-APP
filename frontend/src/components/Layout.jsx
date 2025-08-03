@@ -25,8 +25,7 @@ import {
   PhotoLibrary,
   Style,
   Person,
-  Logout,
-  AccountCircle
+  Logout
 } from '@mui/icons-material'
 import { useAuth } from '../context/AuthContext'
 
@@ -35,8 +34,8 @@ const drawerWidth = 240
 const menuItems = [
   { text: 'Dashboard', icon: <Dashboard />, path: '/dashboard' },
   { text: 'My Closet', icon: <Checkroom />, path: '/closet' },
-  { text: 'Galleries', icon: <PhotoLibrary />, path: '/gallery' },
-  { text: 'Looks', icon: <Style />, path: '/looks' },
+  { text: 'Inspiration Gallery', icon: <PhotoLibrary />, path: '/gallery' },
+  { text: 'AI Looks', icon: <Style />, path: '/looks' },
   { text: 'Profile', icon: <Person />, path: '/profile' }
 ]
 
@@ -123,7 +122,9 @@ const Layout = () => {
             onClick={handleMenuOpen}
             color="inherit"
           >
-            <AccountCircle />
+            <Avatar sx={{ width: 32, height: 32 }}>
+              {user?.username?.charAt(0).toUpperCase()}
+            </Avatar>
           </IconButton>
           <Menu
             id="menu-appbar"
@@ -141,15 +142,11 @@ const Layout = () => {
             onClose={handleMenuClose}
           >
             <MenuItem onClick={() => { navigate('/profile'); handleMenuClose(); }}>
-              <ListItemIcon>
-                <Person fontSize="small" />
-              </ListItemIcon>
+              <Person sx={{ mr: 1 }} />
               Profile
             </MenuItem>
             <MenuItem onClick={handleLogout}>
-              <ListItemIcon>
-                <Logout fontSize="small" />
-              </ListItemIcon>
+              <Logout sx={{ mr: 1 }} />
               Logout
             </MenuItem>
           </Menu>
@@ -187,7 +184,11 @@ const Layout = () => {
       </Box>
       <Box
         component="main"
-        sx={{ flexGrow: 1, p: 3, width: { sm: `calc(100% - ${drawerWidth}px)` } }}
+        sx={{
+          flexGrow: 1,
+          p: 3,
+          width: { sm: `calc(100% - ${drawerWidth}px)` },
+        }}
       >
         <Toolbar />
         <Outlet />
