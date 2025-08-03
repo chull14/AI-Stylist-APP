@@ -128,8 +128,18 @@ const Saved = () => {
             Saved Runway Looks
           </Typography>
           
-          <Box sx={{ columnCount: { xs: 1, sm: 2, md: 3, lg: 4 }, columnGap: 2 }}>
-            {savedLooks.map((look) => (
+          {savedLooks.length === 0 ? (
+            <Box sx={{ textAlign: 'center', py: 8 }}>
+              <Typography variant="h6" color="text.secondary" gutterBottom>
+                No saved looks yet
+              </Typography>
+              <Typography variant="body1" color="text.secondary">
+                Save runway looks from the Explore page to see them here
+              </Typography>
+            </Box>
+          ) : (
+            <Box sx={{ columnCount: { xs: 1, sm: 2, md: 3, lg: 4 }, columnGap: 2 }}>
+              {savedLooks.map((look) => (
               <Box
                 key={look.id}
                 sx={{
@@ -241,7 +251,8 @@ const Saved = () => {
                 </Card>
               </Box>
             ))}
-          </Box>
+            </Box>
+          )}
         </Box>
       )}
 
@@ -252,8 +263,18 @@ const Saved = () => {
             Saved Galleries
           </Typography>
           
-          <Grid container spacing={3}>
-            {savedGalleries.map((gallery) => (
+          {savedGalleries.length === 0 ? (
+            <Box sx={{ textAlign: 'center', py: 8 }}>
+              <Typography variant="h6" color="text.secondary" gutterBottom>
+                No saved galleries yet
+              </Typography>
+              <Typography variant="body1" color="text.secondary">
+                Create galleries using the buttons above or save galleries from the Gallery page
+              </Typography>
+            </Box>
+          ) : (
+            <Grid container spacing={3}>
+              {savedGalleries.map((gallery) => (
               <Grid item xs={12} sm={6} md={4} key={gallery.id}>
                 <Card 
                   sx={{ 
@@ -338,7 +359,8 @@ const Saved = () => {
                 </Card>
               </Grid>
             ))}
-          </Grid>
+            </Grid>
+          )}
         </Box>
       )}
 

@@ -458,3 +458,9 @@
 20250803	17:17:24	428a8b34-775f-4b4f-bc73-9fdd3481338e	GET	http://localhost:3001	/api/users/688f97206b028c68fe110fc7/closet
 20250803	17:17:24	4916c4b9-1500-453e-9235-4e3f760674dd	GET	http://localhost:3001	/api/users/688f97206b028c68fe110fc7/closet
 20250803	17:18:25	75cb46f3-9e73-4822-acb6-b2a7e3d80278	GET	http://localhost:3001	/api/users/688f97206b028c68fe110fc7/closet
+20250803	17:19:46	7380bcf6-13c4-4ed1-8217-0cf5a101a03d	GET	http://localhost:3001	/api/users/688f97206b028c68fe110fc7/galleries
+20250803	17:19:46	b7bcf45b-d954-4425-89b9-72e122c1f404	GET	http://localhost:3001	/api/users/688f97206b028c68fe110fc7/galleries
+20250803	17:19:48	453d9086-13d4-4018-b614-26881fe78f89	GET	http://localhost:3001	/api/users/688f97206b028c68fe110fc7/closet
+20250803	17:19:48	757d54c8-5111-46ea-8e84-def2b518bb61	GET	http://localhost:3001	/api/users/688f97206b028c68fe110fc7/closet
+20250803	17:19:50	6ac7c3b2-7212-44be-87a6-649ef303e1e8	GET	http://localhost:3001	/api/users/688f97206b028c68fe110fc7/galleries
+20250803	17:19:50	fb86a54c-28fd-4bb7-a2a9-e13e9e84fdb0	GET	http://localhost:3001	/api/users/688f97206b028c68fe110fc7/galleries
