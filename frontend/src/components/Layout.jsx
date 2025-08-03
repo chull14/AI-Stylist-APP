@@ -25,16 +25,17 @@ import {
   PhotoLibrary,
   Style,
   Person,
-  Logout
+  Logout,
+  Bookmark
 } from '@mui/icons-material'
 import { useAuth } from '../context/AuthContext'
 
 const drawerWidth = 240
 
 const menuItems = [
-  { text: 'Dashboard', icon: <Dashboard />, path: '/dashboard' },
+  { text: 'Explore', icon: <PhotoLibrary />, path: '/explore' },
+  { text: 'Saved', icon: <Bookmark />, path: '/saved' },
   { text: 'My Closet', icon: <Checkroom />, path: '/closet' },
-  { text: 'Inspiration Gallery', icon: <PhotoLibrary />, path: '/gallery' },
   { text: 'AI Looks', icon: <Style />, path: '/looks' },
   { text: 'Profile', icon: <Person />, path: '/profile' }
 ]

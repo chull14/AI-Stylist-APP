@@ -4,9 +4,9 @@ import { AuthProvider } from './context/AuthContext'
 import Layout from './components/Layout'
 import Login from './pages/Login'
 import Register from './pages/Register'
-import Dashboard from './pages/Dashboard'
+import Explore from './pages/Explore'
+import Saved from './pages/Saved'
 import Closet from './pages/Closet'
-import Gallery from './pages/Gallery'
 import Looks from './pages/Looks'
 import Profile from './pages/Profile'
 import ProtectedRoute from './components/ProtectedRoute'
@@ -18,10 +18,10 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
-          <Route index element={<Navigate to="/dashboard" replace />} />
-          <Route path="dashboard" element={<Dashboard />} />
+          <Route index element={<Navigate to="/explore" replace />} />
+          <Route path="explore" element={<Explore />} />
+          <Route path="saved" element={<Saved />} />
           <Route path="closet" element={<Closet />} />
-          <Route path="gallery" element={<Gallery />} />
           <Route path="looks" element={<Looks />} />
           <Route path="profile" element={<Profile />} />
         </Route>
