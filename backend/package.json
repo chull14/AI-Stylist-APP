@@ -1,14 +1,13 @@
 {
-  "name": "myproject",
+  "name": "ai-stylist-backend",
   "version": "1.0.0",
-  "description": "",
+  "description": "Backend API for AI Stylist App",
   "main": "app.js",
   "scripts": {
     "start": "node app",
-    "dev": "node --watch --env-file=.env app",
-    "build:dev": "vite build --mode development"
+    "dev": "node --watch --env-file=.env app"
   },
-  "keywords": [],
+  "keywords": ["ai", "stylist", "fashion", "api", "express", "mongodb"],
   "author": "",
   "license": "ISC",
   "type": "module",
