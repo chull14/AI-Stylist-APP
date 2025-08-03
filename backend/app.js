@@ -42,6 +42,9 @@ app.use(express.json());
 // middleware for cookies
 app.use(cookieParser());
 
+// Serve static files from uploads directory
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 // auth routes
 app.use('/api', authRoutes);
 

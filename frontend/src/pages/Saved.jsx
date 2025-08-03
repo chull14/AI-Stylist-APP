@@ -269,7 +269,7 @@ const Saved = () => {
                 No saved galleries yet
               </Typography>
               <Typography variant="body1" color="text.secondary">
-                Create galleries using the buttons above or save galleries from the Gallery page
+                Create galleries using saved looks or AI assistant
               </Typography>
             </Box>
           ) : (

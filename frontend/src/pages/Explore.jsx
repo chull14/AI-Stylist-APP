@@ -54,8 +54,27 @@ const Explore = () => {
     colors: '',
     aesthetic: ''
   })
+  const [runwayLooks, setRunwayLooks] = useState([])
+  const [loading, setLoading] = useState(false)
 
-  const runwayLooks = []
+  // Load runway looks from backend
+  const loadRunwayLooks = async () => {
+    try {
+      setLoading(true)
+      const response = await looksAPI.getAllLooks()
+      if (response.data && response.data.myLooks) {
+        setRunwayLooks(response.data.myLooks)
+      }
+    } catch (error) {
+      console.error('Error loading runway looks:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    loadRunwayLooks()
+  }, [])
 
   const categories = [
     { value: 'all', label: 'All Looks' },
@@ -165,7 +184,7 @@ const Explore = () => {
               <Box sx={{ position: 'relative' }}>
                 <CardMedia
                   component="img"
-                  image={look.image}
+                  image={look.imagePath ? `http://localhost:8000/uploads/${look.imagePath.split('/').pop()}` : look.image}
                   alt={look.title}
                   sx={{ height: 'auto', width: '100%' }}
                 />
@@ -223,33 +242,40 @@ const Explore = () => {
                   {look.title}
                 </Typography>
                 <Typography variant="body2" color="primary" sx={{ mb: 1, fontWeight: 500 }}>
-                  {look.designer}
+                  {look.sourceType || 'Uploaded'}
                 </Typography>
                 <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
-                  {look.description}
+                  {look.notes || 'No description available'}
                 </Typography>
 
-                {/* Season Info */}
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                  <Chip label={look.season} size="small" color="secondary" />
-                </Box>
+                {/* Aesthetic Info */}
+                {look.aesthetic && look.aesthetic.length > 0 && (
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                    <Chip label={look.aesthetic[0]} size="small" color="secondary" />
+                    {look.aesthetic.length > 1 && (
+                      <Chip label={`+${look.aesthetic.length - 1} more`} size="small" variant="outlined" sx={{ ml: 1 }} />
+                    )}
+                  </Box>
+                )}
 
                 {/* Stats */}
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
                   <Typography variant="body2" color="textSecondary">
-                    {look.likes.toLocaleString()} likes
+                    Uploaded {new Date(look.createdAt).toLocaleDateString()}
                   </Typography>
                 </Box>
 
                 {/* Tags */}
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                  {look.tags.slice(0, 3).map((tag) => (
-                    <Chip key={tag} label={tag} size="small" variant="outlined" />
-                  ))}
-                  {look.tags.length > 3 && (
-                    <Chip label={`+${look.tags.length - 3}`} size="small" variant="outlined" />
-                  )}
-                </Box>
+                {look.tags && look.tags.length > 0 && (
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                    {look.tags.slice(0, 3).map((tag) => (
+                      <Chip key={tag} label={tag} size="small" variant="outlined" />
+                    ))}
+                    {look.tags.length > 3 && (
+                      <Chip label={`+${look.tags.length - 3}`} size="small" variant="outlined" />
+                    )}
+                  </Box>
+                )}
               </CardContent>
             </Card>
           </Box>
@@ -439,7 +465,8 @@ const Explore = () => {
                 await looksAPI.createLook(uploadForm)
                 setOpenUploadDialog(false)
                 setUploadForm({title: '', aesthetic: '', tags: '', notes: '', image: null})
-                // TODO: Refresh looks list
+                // Refresh looks list after successful upload
+                await loadRunwayLooks()
               } catch (error) {
                 console.error('Error uploading look:', error)
               }

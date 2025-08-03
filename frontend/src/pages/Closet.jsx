@@ -38,26 +38,29 @@ const Closet = () => {
   const [loading, setLoading] = useState(false)
   const [items, setItems] = useState([])
 
+  // Load closet items from backend
+  const loadClosetItems = async () => {
+    try {
+      setLoading(true)
+      const response = await closetAPI.getCloset()
+      if (response.data && response.data.closet) {
+        setItems(response.data.closet)
+      }
+    } catch (error) {
+      console.error('Error loading closet items:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    loadClosetItems()
+  }, [])
+
   const categories = ['Tops', 'Bottoms', 'Outerwear', 'Dresses', 'Shoes', 'Accessories']
   const colors = ['Black', 'White', 'Blue', 'Red', 'Green', 'Yellow', 'Purple', 'Pink', 'Brown', 'Gray']
 
-  // Load closet items from backend
-  useEffect(() => {
-    const loadClosetItems = async () => {
-      try {
-        setLoading(true)
-        const response = await closetAPI.getCloset()
-        // TODO: Replace with actual backend data
-        console.log('Loaded closet items:', response.data)
-      } catch (error) {
-        console.error('Error loading closet items:', error)
-      } finally {
-        setLoading(false)
-      }
-    }
 
-    loadClosetItems()
-  }, [])
 
   const handleAddItem = () => {
     setOpen(true)
@@ -99,7 +102,7 @@ const Closet = () => {
               <CardMedia
                 component="img"
                 height="300"
-                image={item.image}
+                image={item.imagePath ? `http://localhost:8000/uploads/${item.imagePath.split('/').pop()}` : item.image}
                 alt={item.name}
               />
               <CardContent>
@@ -107,7 +110,7 @@ const Closet = () => {
                   {item.name}
                 </Typography>
                 <Typography variant="body2" color="textSecondary">
-                  {item.category} • {item.color}
+                  {item.category || 'Uncategorized'} • {item.colors ? item.colors.join(', ') : 'No color specified'}
                 </Typography>
               </CardContent>
               <CardActions>
@@ -248,7 +251,8 @@ const Closet = () => {
                   name: '', category: '', color: '', brand: '', notes: '',
                   aesthetic: '', colors: '', tags: '', image: null
                 })
-                // TODO: Refresh closet items
+                // Refresh closet items after successful upload
+                await loadClosetItems()
               } catch (error) {
                 console.error('Error adding closet item:', error)
               }
