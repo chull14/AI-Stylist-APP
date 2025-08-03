@@ -56,68 +56,8 @@ const Saved = () => {
   })
   const [loading, setLoading] = useState(false)
 
-  const savedLooks = [
-    {
-      id: 1,
-      title: 'Chanel Spring 2024',
-      designer: 'Chanel',
-      season: 'Spring 2024',
-      image: 'https://via.placeholder.com/400x600/ff6b6b/ffffff?text=Chanel+Spring',
-      likes: 1247,
-      savedDate: '2024-01-15',
-      tags: ['Chanel', 'Spring', 'Luxury', 'Paris']
-    },
-    {
-      id: 2,
-      title: 'Balenciaga Fall 2024',
-      designer: 'Balenciaga',
-      season: 'Fall 2024',
-      image: 'https://via.placeholder.com/400x500/4ecdc4/ffffff?text=Balenciaga+Fall',
-      likes: 892,
-      savedDate: '2024-01-10',
-      tags: ['Balenciaga', 'Fall', 'Avant-garde', 'Paris']
-    },
-    {
-      id: 3,
-      title: 'Dior Haute Couture',
-      designer: 'Dior',
-      season: 'Haute Couture 2024',
-      image: 'https://via.placeholder.com/400x700/45b7d1/ffffff?text=Dior+Couture',
-      likes: 2156,
-      savedDate: '2024-01-05',
-      tags: ['Dior', 'Haute Couture', 'Luxury', 'Paris']
-    }
-  ]
-
-  const savedGalleries = [
-    {
-      id: 1,
-      title: 'Summer Street Style',
-      description: 'Casual and chic summer looks for everyday inspiration',
-      coverImage: 'https://via.placeholder.com/400x600/ff6b6b/ffffff?text=Summer+Style',
-      imageCount: 24,
-      createdDate: '2024-01-20',
-      tags: ['Summer', 'Casual', 'Street Style', 'Fashion']
-    },
-    {
-      id: 2,
-      title: 'Evening Elegance',
-      description: 'Sophisticated evening wear and formal occasions',
-      coverImage: 'https://via.placeholder.com/400x500/4ecdc4/ffffff?text=Evening+Elegance',
-      imageCount: 18,
-      createdDate: '2024-01-15',
-      tags: ['Evening', 'Elegant', 'Formal', 'Luxury']
-    },
-    {
-      id: 3,
-      title: 'Minimalist Chic',
-      description: 'Clean and minimal fashion for the modern woman',
-      coverImage: 'https://via.placeholder.com/400x700/45b7d1/ffffff?text=Minimalist',
-      imageCount: 32,
-      createdDate: '2024-01-10',
-      tags: ['Minimalist', 'Clean', 'Modern', 'Simple']
-    }
-  ]
+  const savedLooks = []
+  const savedGalleries = []
 
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue)

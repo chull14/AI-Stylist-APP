@@ -1,4 +1,5 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
+import { looksAPI } from '../services/api'
 import {
   Box,
   Typography,
@@ -38,6 +39,14 @@ const Explore = () => {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [openAILookDialog, setOpenAILookDialog] = useState(false)
+  const [openUploadDialog, setOpenUploadDialog] = useState(false)
+  const [uploadForm, setUploadForm] = useState({
+    title: '',
+    aesthetic: '',
+    tags: '',
+    notes: '',
+    image: null
+  })
   const [aiLookParams, setAILookParams] = useState({
     style: '',
     occasion: '',
@@ -46,104 +55,7 @@ const Explore = () => {
     aesthetic: ''
   })
 
-  const runwayLooks = [
-    {
-      id: 1,
-      title: 'Chanel Spring 2024',
-      designer: 'Chanel',
-      season: 'Spring 2024',
-      image: 'https://via.placeholder.com/400x600/ff6b6b/ffffff?text=Chanel+Spring',
-      likes: 1247,
-      isLiked: false,
-      isSaved: false,
-      tags: ['Chanel', 'Spring', 'Luxury', 'Paris'],
-      description: 'Elegant spring collection featuring pastel colors and floral motifs'
-    },
-    {
-      id: 2,
-      title: 'Balenciaga Fall 2024',
-      designer: 'Balenciaga',
-      season: 'Fall 2024',
-      image: 'https://via.placeholder.com/400x500/4ecdc4/ffffff?text=Balenciaga+Fall',
-      likes: 892,
-      isLiked: true,
-      isSaved: true,
-      tags: ['Balenciaga', 'Fall', 'Avant-garde', 'Paris'],
-      description: 'Bold and innovative designs pushing fashion boundaries'
-    },
-    {
-      id: 3,
-      title: 'Dior Haute Couture',
-      designer: 'Dior',
-      season: 'Haute Couture 2024',
-      image: 'https://via.placeholder.com/400x700/45b7d1/ffffff?text=Dior+Couture',
-      likes: 2156,
-      isLiked: true,
-      isSaved: false,
-      tags: ['Dior', 'Haute Couture', 'Luxury', 'Paris'],
-      description: 'Exquisite craftsmanship meets timeless elegance'
-    },
-    {
-      id: 4,
-      title: 'Gucci Spring 2024',
-      designer: 'Gucci',
-      season: 'Spring 2024',
-      image: 'https://via.placeholder.com/400x550/96ceb4/ffffff?text=Gucci+Spring',
-      likes: 1567,
-      isLiked: false,
-      isSaved: true,
-      tags: ['Gucci', 'Spring', 'Luxury', 'Milan'],
-      description: 'Playful and vibrant collection with bold prints and colors'
-    },
-    {
-      id: 5,
-      title: 'Prada Fall 2024',
-      designer: 'Prada',
-      season: 'Fall 2024',
-      image: 'https://via.placeholder.com/400x650/f7b731/ffffff?text=Prada+Fall',
-      likes: 943,
-      isLiked: true,
-      isSaved: true,
-      tags: ['Prada', 'Fall', 'Minimalist', 'Milan'],
-      description: 'Clean lines and sophisticated minimalism'
-    },
-    {
-      id: 6,
-      title: 'Louis Vuitton Cruise',
-      designer: 'Louis Vuitton',
-      season: 'Cruise 2024',
-      image: 'https://via.placeholder.com/400x580/e17055/ffffff?text=LV+Cruise',
-      likes: 1789,
-      isLiked: false,
-      isSaved: false,
-      tags: ['Louis Vuitton', 'Cruise', 'Luxury', 'Paris'],
-      description: 'Travel-inspired collection with global influences'
-    },
-    {
-      id: 7,
-      title: 'Saint Laurent Fall 2024',
-      designer: 'Saint Laurent',
-      season: 'Fall 2024',
-      image: 'https://via.placeholder.com/400x600/6c5ce7/ffffff?text=YSL+Fall',
-      likes: 1123,
-      isLiked: true,
-      isSaved: false,
-      tags: ['Saint Laurent', 'Fall', 'Paris', 'Luxury'],
-      description: 'Sophisticated and powerful designs for the modern woman'
-    },
-    {
-      id: 8,
-      title: 'Versace Spring 2024',
-      designer: 'Versace',
-      season: 'Spring 2024',
-      image: 'https://via.placeholder.com/400x500/00b894/ffffff?text=Versace+Spring',
-      likes: 1345,
-      isLiked: false,
-      isSaved: true,
-      tags: ['Versace', 'Spring', 'Glamour', 'Milan'],
-      description: 'Bold prints and glamorous designs for the confident woman'
-    }
-  ]
+  const runwayLooks = []
 
   const categories = [
     { value: 'all', label: 'All Looks' },
@@ -219,8 +131,18 @@ const Explore = () => {
       </Box>
 
       {/* Masonry Grid */}
-      <Box sx={{ columnCount: { xs: 1, sm: 2, md: 3, lg: 4 }, columnGap: 2 }}>
-        {filteredLooks.map((look) => (
+      {filteredLooks.length === 0 ? (
+        <Box sx={{ textAlign: 'center', py: 8 }}>
+          <Typography variant="h6" color="text.secondary" gutterBottom>
+            No runway looks yet
+          </Typography>
+          <Typography variant="body1" color="text.secondary">
+            Upload your first runway look using the + button below
+          </Typography>
+        </Box>
+      ) : (
+        <Box sx={{ columnCount: { xs: 1, sm: 2, md: 3, lg: 4 }, columnGap: 2 }}>
+          {filteredLooks.map((look) => (
           <Box
             key={look.id}
             sx={{
@@ -332,7 +254,8 @@ const Explore = () => {
             </Card>
           </Box>
         ))}
-      </Box>
+        </Box>
+      )}
 
       {/* AI Generate Look Dialog */}
       <Dialog open={openAILookDialog} onClose={() => setOpenAILookDialog(false)} maxWidth="md" fullWidth>
@@ -449,19 +372,105 @@ const Explore = () => {
         </DialogActions>
       </Dialog>
 
-      {/* Floating Action Button */}
-      <Fab
-        color="primary"
-        aria-label="generate"
-        sx={{
-          position: 'fixed',
-          bottom: 16,
-          right: 16,
-        }}
-        onClick={() => setOpenAILookDialog(true)}
-      >
-        <AutoAwesome />
-      </Fab>
+      {/* Upload Look Dialog */}
+      <Dialog open={openUploadDialog} onClose={() => setOpenUploadDialog(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Upload Runway Look</DialogTitle>
+        <DialogContent>
+          <Stack spacing={3} sx={{ mt: 2 }}>
+            <TextField
+              fullWidth
+              label="Title"
+              value={uploadForm.title}
+              onChange={(e) => setUploadForm({...uploadForm, title: e.target.value})}
+              placeholder="e.g., Chanel Spring 2024"
+            />
+            
+            <TextField
+              fullWidth
+              label="Aesthetic (comma-separated)"
+              value={uploadForm.aesthetic}
+              onChange={(e) => setUploadForm({...uploadForm, aesthetic: e.target.value})}
+              placeholder="e.g., luxury, elegant, spring"
+            />
+            
+            <TextField
+              fullWidth
+              label="Tags (comma-separated)"
+              value={uploadForm.tags}
+              onChange={(e) => setUploadForm({...uploadForm, tags: e.target.value})}
+              placeholder="e.g., Chanel, Spring, Paris, Luxury"
+            />
+            
+            <TextField
+              fullWidth
+              multiline
+              rows={3}
+              label="Notes"
+              value={uploadForm.notes}
+              onChange={(e) => setUploadForm({...uploadForm, notes: e.target.value})}
+              placeholder="Description of the look..."
+            />
+            
+            <Button
+              variant="outlined"
+              component="label"
+              fullWidth
+            >
+              Upload Image
+              <input
+                type="file"
+                hidden
+                accept="image/*"
+                onChange={(e) => setUploadForm({...uploadForm, image: e.target.files[0]})}
+              />
+            </Button>
+            {uploadForm.image && (
+              <Typography variant="body2" color="text.secondary">
+                Selected: {uploadForm.image.name}
+              </Typography>
+            )}
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenUploadDialog(false)}>Cancel</Button>
+          <Button 
+            onClick={async () => {
+              try {
+                await looksAPI.createLook(uploadForm)
+                setOpenUploadDialog(false)
+                setUploadForm({title: '', aesthetic: '', tags: '', notes: '', image: null})
+                // TODO: Refresh looks list
+              } catch (error) {
+                console.error('Error uploading look:', error)
+              }
+            }} 
+            variant="contained"
+            color="secondary"
+            disabled={!uploadForm.title || !uploadForm.image}
+          >
+            Upload Look
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Floating Action Buttons */}
+      <Box sx={{ position: 'fixed', bottom: 16, right: 16, display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <Fab
+          color="secondary"
+          aria-label="upload look"
+          onClick={() => setOpenUploadDialog(true)}
+          sx={{ mb: 1 }}
+        >
+          <Add />
+        </Fab>
+        <Fab
+          color="primary"
+          aria-label="generate AI look"
+          onClick={() => setOpenAILookDialog(true)}
+        >
+          <AutoAwesome />
+        </Fab>
+      </Box>
     </Box>
   )
 }
