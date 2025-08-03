@@ -4,33 +4,24 @@ import {
   AppBar,
   Box,
   CssBaseline,
-  Drawer,
   IconButton,
-  List,
-  ListItem,
-  ListItemButton,
-  ListItemIcon,
-  ListItemText,
   Toolbar,
   Typography,
   Avatar,
   Menu,
   MenuItem,
-  Divider
+  Tabs,
+  Tab
 } from '@mui/material'
 import {
-  Menu as MenuIcon,
-  Dashboard,
-  Checkroom,
-  PhotoLibrary,
-  Style,
   Person,
   Logout,
-  Bookmark
+  PhotoLibrary,
+  Bookmark,
+  Checkroom,
+  Style
 } from '@mui/icons-material'
 import { useAuth } from '../context/AuthContext'
-
-const drawerWidth = 240
 
 const menuItems = [
   { text: 'Explore', icon: <PhotoLibrary />, path: '/explore' },
@@ -41,15 +32,10 @@ const menuItems = [
 ]
 
 const Layout = () => {
-  const [mobileOpen, setMobileOpen] = useState(false)
   const [anchorEl, setAnchorEl] = useState(null)
   const { user, logout } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
-
-  const handleDrawerToggle = () => {
-    setMobileOpen(!mobileOpen)
-  }
 
   const handleMenuOpen = (event) => {
     setAnchorEl(event.currentTarget)
@@ -65,56 +51,52 @@ const Layout = () => {
     handleMenuClose()
   }
 
-  const drawer = (
-    <div>
-      <Toolbar>
-        <Typography variant="h6" noWrap component="div">
-          AI Stylist
-        </Typography>
-      </Toolbar>
-      <Divider />
-      <List>
-        {menuItems.map((item) => (
-          <ListItem key={item.text} disablePadding>
-            <ListItemButton
-              selected={location.pathname === item.path}
-              onClick={() => {
-                navigate(item.path)
-                setMobileOpen(false)
-              }}
-            >
-              <ListItemIcon>{item.icon}</ListItemIcon>
-              <ListItemText primary={item.text} />
-            </ListItemButton>
-          </ListItem>
-        ))}
-      </List>
-    </div>
-  )
+  const handleTabChange = (event, newValue) => {
+    const selectedItem = menuItems[newValue]
+    navigate(selectedItem.path)
+  }
+
+  const getCurrentTabIndex = () => {
+    return menuItems.findIndex(item => item.path === location.pathname)
+  }
 
   return (
-    <Box sx={{ display: 'flex' }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <CssBaseline />
-      <AppBar
-        position="fixed"
-        sx={{
-          width: { sm: `calc(100% - ${drawerWidth}px)` },
-          ml: { sm: `${drawerWidth}px` },
-        }}
-      >
+      <AppBar position="static">
         <Toolbar>
-          <IconButton
-            color="inherit"
-            aria-label="open drawer"
-            edge="start"
-            onClick={handleDrawerToggle}
-            sx={{ mr: 2, display: { sm: 'none' } }}
-          >
-            <MenuIcon />
-          </IconButton>
-          <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
+          <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 0, mr: 4 }}>
             AI Stylist
           </Typography>
+          
+          <Tabs 
+            value={getCurrentTabIndex()} 
+            onChange={handleTabChange}
+            sx={{ 
+              flexGrow: 1,
+              justifyContent: 'center',
+              '& .MuiTabs-flexContainer': {
+                justifyContent: 'center',
+                gap: 6,
+              },
+              '& .MuiTab-root': {
+                color: 'rgba(255, 255, 255, 0.7)',
+                minWidth: 'auto',
+                padding: '12px 24px',
+                '&.Mui-selected': {
+                  color: '#ffffff',
+                },
+              },
+            }}
+          >
+            {menuItems.map((item, index) => (
+              <Tab 
+                key={item.text} 
+                label={item.text}
+              />
+            ))}
+          </Tabs>
+
           <IconButton
             size="large"
             aria-label="account of current user"
@@ -153,45 +135,14 @@ const Layout = () => {
           </Menu>
         </Toolbar>
       </AppBar>
-      <Box
-        component="nav"
-        sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}
-        aria-label="mailbox folders"
-      >
-        <Drawer
-          variant="temporary"
-          open={mobileOpen}
-          onClose={handleDrawerToggle}
-          ModalProps={{
-            keepMounted: true,
-          }}
-          sx={{
-            display: { xs: 'block', sm: 'none' },
-            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
-          }}
-        >
-          {drawer}
-        </Drawer>
-        <Drawer
-          variant="permanent"
-          sx={{
-            display: { xs: 'none', sm: 'block' },
-            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
-          }}
-          open
-        >
-          {drawer}
-        </Drawer>
-      </Box>
+      
       <Box
         component="main"
         sx={{
           flexGrow: 1,
           p: 3,
-          width: { sm: `calc(100% - ${drawerWidth}px)` },
         }}
       >
-        <Toolbar />
         <Outlet />
       </Box>
     </Box>
