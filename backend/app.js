@@ -2,6 +2,7 @@ import express from 'express';
 import mongoose from 'mongoose';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import dotenv from 'dotenv';
 import connectDB from './config/dbConn.js';
 import { logger } from './middleware/logEvents.js';
 import errorHandler from './middleware/errorHandler.js';
@@ -11,6 +12,10 @@ import userRoutes from './routes/api/users.js';
 import galleryRoutes from './routes/api/galleries.js';
 import lookRoutes from './routes/api/looks.js';
 import closetRoutes from './routes/api/closet.js';
+
+// Load environment variables
+dotenv.config();
+
 const PORT = process.env.PORT || 8000;
 
 connectDB();

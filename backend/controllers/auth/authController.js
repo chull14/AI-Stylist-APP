@@ -96,9 +96,8 @@ const handleNewUser = async (req, res) => { // register new user
   const duplicateUsername = await User.findOne({ username: username }).exec(); 
   const duplicateEmail = await User.findOne({ email: email }).exec();
 
-  if (duplicateUsername) return res.sendStatus(409).json({ "message": "Account with this username already exists" }); 
-  if (duplicateEmail) return res.sendStatus(409).json({ "message": "Account with this email already exists" }); 
-
+  if (duplicateUsername) return res.status(409).json({ "message": "Account with this username already exists" }); 
+  if (duplicateEmail) return res.status(409).json({ "message": "Account with this email already exists" }); 
 
   try {
     // encrypt the password
@@ -112,9 +111,44 @@ const handleNewUser = async (req, res) => { // register new user
     });
     console.log(newUser);
 
+    // Create tokens for the new user
+    const roles = Object.values(newUser.roles);
+    const accessToken = jwt.sign(
+      { 
+        "UserInfo": {
+          "id": newUser._id,
+          "username": newUser.username,
+          "roles": roles
+        }
+      },
+      process.env.ACCESS_TOKEN_SECRET,
+      { expiresIn: '30m' }
+    ); 
+    const refreshToken = jwt.sign(
+      { "username": newUser.username },
+      process.env.REFRESH_TOKEN_SECRET,
+      { expiresIn: '1d' }
+    );
+
+    // Save refresh token with new user
+    newUser.refreshToken = refreshToken;
+    await newUser.save();
+
+    // Set refresh token cookie
+    res.cookie('jwt', refreshToken, {
+      httpOnly: true,
+      sameSite: 'None',
+      secure: true,
+      maxAge: 24 * 60 * 60 * 1000
+    }); 
+
     res.status(201).json({ 
-      success: `New user ${username} created!`,
-      userId: newUser._id
+      accessToken,
+      user: {
+        id: newUser._id,
+        username: newUser.username,
+        roles: newUser.roles
+      }
     });
   } catch (err) {
     res.status(500).json({ 'message': err.message });

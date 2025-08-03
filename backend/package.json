@@ -7,13 +7,21 @@
     "start": "node app",
     "dev": "node --watch --env-file=.env app"
   },
-  "keywords": ["ai", "stylist", "fashion", "api", "express", "mongodb"],
+  "keywords": [
+    "ai",
+    "stylist",
+    "fashion",
+    "api",
+    "express",
+    "mongodb"
+  ],
   "author": "",
   "license": "ISC",
   "type": "module",
   "dependencies": {
     "bcrypt": "^6.0.0",
     "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
     "date-fns": "^4.1.0",
     "dotenv": "^17.0.1",
     "express": "^5.1.0",
