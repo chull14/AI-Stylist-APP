@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
+import cors from 'cors';
 import connectDB from './config/dbConn.js';
 import { logger } from './middleware/logEvents.js';
 import errorHandler from './middleware/errorHandler.js';
@@ -25,6 +26,12 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
+
+// CORS middleware
+app.use(cors({
+  origin: ['http://localhost:3000', 'http://localhost:3001'],
+  credentials: true
+}));
 
 // custome middleware logger
 app.use(logger);
