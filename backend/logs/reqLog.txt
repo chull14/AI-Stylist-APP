@@ -336,3 +336,11 @@
 20250725	18:51:43	f112e51d-7e9a-41db-84a4-419682ce6edf	GET	undefined	/api/users/687ed1ec32c60a735458ec7d/closet
 20250725	18:52:33	e1902fb9-975f-48b8-8800-8314caedb1b6	GET	undefined	/api/users/687ed1ec32c60a735458ec7d/closet
 20250725	18:52:54	8ff00284-35c2-43bd-b00d-9331f63c1a9c	GET	undefined	/api/users/687ed1ec32c60a735458ec7d/closet/68840786fa1ff13cb728662f
+20250803	13:06:40	2b8560c2-ac76-4eff-96ef-df87fa3af243	POST	http://localhost:3001	/api/register
+20250803	13:07:41	9442b1b9-6d6e-4e88-bf7f-7b7c7cde8a93	GET	http://localhost:3001	/api/logout
+20250803	13:07:48	a0227e72-6306-40db-b1f3-a959846cf14b	POST	http://localhost:3001	/api/login
+20250803	13:07:50	3696ec50-ace6-4263-8033-2fa8f9206310	POST	http://localhost:3001	/api/login
+20250803	13:09:15	af3c2f2b-25aa-4fcf-8b95-01c36f935b56	POST	http://localhost:3001	/api/login
+20250803	13:12:44	d318c036-11a7-4504-826d-23f246a59d97	POST	http://localhost:3001	/api/login
+20250803	13:12:47	55603828-97d3-4a5b-8d88-2e9ba437dce1	GET	http://localhost:3001	/api/refresh
+20250803	13:12:47	16cb69be-ac98-4ed0-b0ff-891c238f04ee	GET	http://localhost:3001	/api/refresh

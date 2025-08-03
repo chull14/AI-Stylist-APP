@@ -74,7 +74,7 @@ export const AuthProvider = ({ children }) => {
   const login = async (username, password) => {
     try {
       setError(null)
-      const response = await axios.post('/api/login', { username, password })
+      const response = await axios.post('/api/login', { username, pwd: password })
       const { accessToken, user } = response.data
       
       localStorage.setItem('accessToken', accessToken)
@@ -133,8 +133,30 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('accessToken', accessToken)
       setUser(user)
     } catch (error) {
-      localStorage.removeItem('accessToken')
-      setUser(null)
+      console.log('Auth check failed:', error)
+      // Only clear token if it's an auth error, not network error
+      if (error.response?.status === 401 || error.response?.status === 403) {
+        localStorage.removeItem('accessToken')
+        setUser(null)
+      } else {
+        // For network errors, keep the user logged in if we have a token
+        const token = localStorage.getItem('accessToken')
+        if (token) {
+          // Try to decode the token to get user info
+          try {
+            const payload = JSON.parse(atob(token.split('.')[1]))
+            setUser({
+              id: payload.UserInfo.id,
+              username: payload.UserInfo.username,
+              roles: payload.UserInfo.roles
+            })
+          } catch (e) {
+            console.log('Could not decode token:', e)
+            localStorage.removeItem('accessToken')
+            setUser(null)
+          }
+        }
+      }
     } finally {
       setLoading(false)
     }
