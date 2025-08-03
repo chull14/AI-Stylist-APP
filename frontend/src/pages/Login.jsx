@@ -35,7 +35,7 @@ const Login = () => {
     const result = await login(formData.username, formData.password)
     
     if (result.success) {
-      navigate('/dashboard')
+      navigate('/explore')
     }
     
     setLoading(false)

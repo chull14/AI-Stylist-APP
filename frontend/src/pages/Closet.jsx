@@ -1,4 +1,5 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
+import { closetAPI } from '../services/api'
 import {
   Box,
   Typography,
@@ -23,6 +24,7 @@ import { Add, Edit, Delete } from '@mui/icons-material'
 
 const Closet = () => {
   const [open, setOpen] = useState(false)
+  const [loading, setLoading] = useState(false)
   const [items, setItems] = useState([
     {
       id: 1,
@@ -42,6 +44,24 @@ const Closet = () => {
 
   const categories = ['Tops', 'Bottoms', 'Outerwear', 'Dresses', 'Shoes', 'Accessories']
   const colors = ['Black', 'White', 'Blue', 'Red', 'Green', 'Yellow', 'Purple', 'Pink', 'Brown', 'Gray']
+
+  // Load closet items from backend
+  useEffect(() => {
+    const loadClosetItems = async () => {
+      try {
+        setLoading(true)
+        const response = await closetAPI.getCloset()
+        // TODO: Replace with actual backend data
+        console.log('Loaded closet items:', response.data)
+      } catch (error) {
+        console.error('Error loading closet items:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadClosetItems()
+  }, [])
 
   const handleAddItem = () => {
     setOpen(true)

@@ -1,4 +1,5 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
+import { galleryAPI } from '../services/api'
 import {
   Box,
   Typography,
@@ -55,6 +56,7 @@ const Gallery = () => {
     style: '',
     occasion: ''
   })
+  const [loading, setLoading] = useState(false)
 
   const galleries = [
     {
@@ -146,6 +148,24 @@ const Gallery = () => {
     { value: 'workwear', label: 'Workwear' },
     { value: 'vintage', label: 'Vintage' }
   ]
+
+  // Load galleries from backend
+  useEffect(() => {
+    const loadGalleries = async () => {
+      try {
+        setLoading(true)
+        const response = await galleryAPI.getAllGalleries()
+        // TODO: Replace with actual backend data
+        console.log('Loaded galleries:', response.data)
+      } catch (error) {
+        console.error('Error loading galleries:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadGalleries()
+  }, [])
 
   const filteredGalleries = galleries.filter(gallery => {
     const matchesSearch = gallery.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -389,16 +409,24 @@ const Gallery = () => {
         <DialogActions>
           <Button onClick={() => setOpenCreateDialog(false)}>Cancel</Button>
           <Button 
-            onClick={() => {
-              // TODO: Save gallery to backend
-              console.log('Creating gallery:', newGallery)
-              setOpenCreateDialog(false)
-              setNewGallery({title: '', description: '', coverImage: '', tags: []})
+            onClick={async () => {
+              try {
+                setLoading(true)
+                await galleryAPI.createGallery(newGallery)
+                console.log('Gallery created successfully')
+                setOpenCreateDialog(false)
+                setNewGallery({title: '', description: '', coverImage: '', tags: []})
+                // TODO: Refresh galleries list
+              } catch (error) {
+                console.error('Error creating gallery:', error)
+              } finally {
+                setLoading(false)
+              }
             }} 
             variant="contained"
-            disabled={!newGallery.title || !newGallery.description}
+            disabled={!newGallery.title || !newGallery.description || loading}
           >
-            Create Gallery
+            {loading ? 'Creating...' : 'Create Gallery'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -513,17 +541,34 @@ const Gallery = () => {
         <DialogActions>
           <Button onClick={() => setOpenAICreateDialog(false)}>Cancel</Button>
           <Button 
-            onClick={() => {
-              // TODO: Call AI service to generate gallery
-              console.log('AI Gallery Params:', aiGalleryParams)
-              setOpenAICreateDialog(false)
-              setAIGalleryParams({aesthetic: '', colors: '', season: '', style: '', occasion: '', title: ''})
+            onClick={async () => {
+              try {
+                setLoading(true)
+                // TODO: Call AI service to generate gallery
+                console.log('AI Gallery Params:', aiGalleryParams)
+                // For now, create a gallery with AI parameters
+                const aiGalleryData = {
+                  title: aiGalleryParams.title || `AI ${aiGalleryParams.aesthetic} Gallery`,
+                  description: `AI-generated gallery with ${aiGalleryParams.aesthetic} aesthetic, ${aiGalleryParams.colors} colors, ${aiGalleryParams.season} season`,
+                  coverImage: 'https://via.placeholder.com/400x600/4ecdc4/ffffff?text=AI+Generated',
+                  tags: [aiGalleryParams.aesthetic, aiGalleryParams.colors, aiGalleryParams.season, aiGalleryParams.style, aiGalleryParams.occasion].filter(Boolean)
+                }
+                await galleryAPI.createGallery(aiGalleryData)
+                console.log('AI Gallery created successfully')
+                setOpenAICreateDialog(false)
+                setAIGalleryParams({aesthetic: '', colors: '', season: '', style: '', occasion: '', title: ''})
+                // TODO: Refresh galleries list
+              } catch (error) {
+                console.error('Error creating AI gallery:', error)
+              } finally {
+                setLoading(false)
+              }
             }} 
             variant="contained"
             color="secondary"
-            disabled={!aiGalleryParams.aesthetic || !aiGalleryParams.colors || !aiGalleryParams.season}
+            disabled={!aiGalleryParams.aesthetic || !aiGalleryParams.colors || !aiGalleryParams.season || loading}
           >
-            Generate AI Gallery
+            {loading ? 'Generating...' : 'Generate AI Gallery'}
           </Button>
         </DialogActions>
       </Dialog>

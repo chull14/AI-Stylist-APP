@@ -1,4 +1,5 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
+import { galleryAPI } from '../services/api'
 import {
   Box,
   Typography,
@@ -53,6 +54,7 @@ const Saved = () => {
     style: '',
     occasion: ''
   })
+  const [loading, setLoading] = useState(false)
 
   const savedLooks = [
     {
@@ -120,6 +122,24 @@ const Saved = () => {
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue)
   }
+
+  // Load saved galleries from backend
+  useEffect(() => {
+    const loadSavedGalleries = async () => {
+      try {
+        setLoading(true)
+        const response = await galleryAPI.getAllGalleries()
+        // TODO: Replace with actual backend data
+        console.log('Loaded saved galleries:', response.data)
+      } catch (error) {
+        console.error('Error loading saved galleries:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadSavedGalleries()
+  }, [])
 
   return (
     <Box>
