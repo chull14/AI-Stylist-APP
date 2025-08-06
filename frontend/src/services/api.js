@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 // Base API configuration
-const api = axios.create({
+export const api = axios.create({
   baseURL: 'http://localhost:8000',
   withCredentials: true
 })
@@ -239,6 +239,4 @@ export const userAPI = {
     const userId = getUserId()
     return api.delete(`/api/users/${userId}`)
   }
-}
-
-export default api 
+} 
