@@ -39,3 +39,4 @@
 20250722	12:47:22	13a3dea1-7e39-45a2-a62e-cf6081f16536	TypeError: Cannot destructure property 'title' of 'req.body' as it is undefined.
 20250722	12:47:27	c2215840-3e22-4161-b216-1e8e49e56255	TypeError: Cannot destructure property 'title' of 'req.body' as it is undefined.
 20250722	12:56:13	6a229983-fbd7-46eb-9c8c-b5b01c4ea1a3	TypeError: Cannot read properties of undefined (reading 'id')
+20250806	13:24:12	f5340f77-2ec8-4db0-ab55-df0fec05de8b	MulterError: File too large

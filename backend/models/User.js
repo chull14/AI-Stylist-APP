@@ -47,7 +47,7 @@ const userSchema = new Schema({
   }],
   closet: [{ 
     type: mongoose.Schema.Types.ObjectId, 
-    ref: 'Look' 
+    ref: 'Closet' 
   }],
 }, { timestamps: true });
 

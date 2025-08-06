@@ -469,6 +469,11 @@ const Explore = () => {
                 await loadRunwayLooks()
               } catch (error) {
                 console.error('Error uploading look:', error)
+                // Show user-friendly error message
+                const errorMessage = error.response?.data?.message || 
+                                   error.message || 
+                                   'Failed to upload look. Please try again.'
+                alert(errorMessage)
               }
             }} 
             variant="contained"

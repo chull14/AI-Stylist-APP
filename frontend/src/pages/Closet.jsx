@@ -255,6 +255,11 @@ const Closet = () => {
                 await loadClosetItems()
               } catch (error) {
                 console.error('Error adding closet item:', error)
+                // Show user-friendly error message
+                const errorMessage = error.response?.data?.message || 
+                                   error.message || 
+                                   'Failed to add item. Please try again.'
+                alert(errorMessage)
               }
             }} 
             variant="contained"
