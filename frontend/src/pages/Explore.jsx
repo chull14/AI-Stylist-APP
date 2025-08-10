@@ -50,8 +50,6 @@ const Explore = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [successMessage, setSuccessMessage] = useState('')
-  const [likedLooks, setLikedLooks] = useState(new Set())
-  const [savedLooks, setSavedLooks] = useState(new Set())
   
   const [uploadForm, setUploadForm] = useState({
     title: '',
@@ -80,15 +78,15 @@ const Explore = () => {
           id: look._id,
           title: look.title,
           description: look.description,
-          image: look.image || look.imagePath ? `http://localhost:8000/uploads/${look.imagePath.split('/').pop()}` : 'https://via.placeholder.com/400x500/ff9ff3/ffffff?text=Look',
+          image: look.image || (look.imagePath ? `http://localhost:8000/uploads/${look.imagePath.split('/').pop()}` : 'https://via.placeholder.com/400x500/ff9ff3/ffffff?text=Look'),
           style: look.style,
           occasion: look.occasion,
           aesthetic: look.aesthetic || [],
           tags: look.tags || [],
           notes: look.notes,
           sourceType: look.sourceType || 'Uploaded',
-          isLiked: likedLooks.has(look._id),
-          isSaved: savedLooks.has(look._id),
+          isLiked: look.isLiked || false,
+          isSaved: look.isSaved || false,
           createdAt: look.createdAt,
           updatedAt: look.updatedAt
         }))
@@ -187,42 +185,26 @@ const Explore = () => {
     }
   }
 
-  const handleLikeLook = (lookId) => {
-    setLikedLooks(prev => {
-      const newSet = new Set(prev)
-      if (newSet.has(lookId)) {
-        newSet.delete(lookId)
-      } else {
-        newSet.add(lookId)
+  const handleLikeLook = async (lookId) => {
+    try {
+      console.log('Saving look with ID:', lookId)
+      const response = await looksAPI.toggleLikeLook(lookId)
+      
+      if (response.data) {
+        console.log('Save response:', response.data)
+        // Update the look in the list with the new save status
+        setRunwayLooks(prev => prev.map(look => 
+          look.id === lookId 
+            ? { ...look, isLiked: response.data.isLiked, isSaved: response.data.isSaved }
+            : look
+        ))
+        
+        setSuccessMessage(response.data.message)
       }
-      return newSet
-    })
-    
-    // Update the look in the list
-    setRunwayLooks(prev => prev.map(look => 
-      look.id === lookId 
-        ? { ...look, isLiked: !look.isLiked }
-        : look
-    ))
-  }
-
-  const handleSaveLook = (lookId) => {
-    setSavedLooks(prev => {
-      const newSet = new Set(prev)
-      if (newSet.has(lookId)) {
-        newSet.delete(lookId)
-      } else {
-        newSet.add(lookId)
-      }
-      return newSet
-    })
-    
-    // Update the look in the list
-    setRunwayLooks(prev => prev.map(look => 
-      look.id === lookId 
-        ? { ...look, isSaved: !look.isSaved }
-        : look
-    ))
+    } catch (error) {
+      console.error('Error toggling save:', error)
+      setError('Failed to update save status. Please try again.')
+    }
   }
 
   const handleShareLook = (look) => {
@@ -299,6 +281,7 @@ const Explore = () => {
           >
             Generate AI Look
           </Button>
+
         </Box>
 
         {/* Category Chips */}
@@ -354,20 +337,25 @@ const Explore = () => {
 
       {/* Masonry Grid */}
       {filteredLooks.length > 0 && (
-        <Box sx={{ columnCount: { xs: 1, sm: 2, md: 3, lg: 4 }, columnGap: 2 }}>
+        <Box sx={{ 
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)', lg: 'repeat(4, 1fr)' },
+          gap: 2
+        }}>
           {filteredLooks.map((look) => (
           <Box
             key={look.id}
             sx={{
-              breakInside: 'avoid',
-              mb: 2,
-              display: 'inline-block',
-              width: '100%'
+              display: 'flex',
+              flexDirection: 'column'
             }}
           >
             <Card 
               sx={{ 
                 cursor: 'pointer',
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
                 '&:hover': { 
                   transform: 'translateY(-4px)',
                   transition: 'transform 0.2s ease-in-out',
@@ -401,10 +389,10 @@ const Explore = () => {
                     sx={{ bgcolor: 'rgba(255,255,255,0.9)', '&:hover': { bgcolor: 'rgba(255,255,255,0.95)' } }}
                     onClick={(e) => {
                       e.stopPropagation()
-                      handleSaveLook(look.id)
+                      handleLikeLook(look.id)
                     }}
                   >
-                    {look.isSaved ? <Bookmark color="primary" /> : <BookmarkBorder />}
+                    {look.isLiked ? <Favorite color="error" /> : <FavoriteBorder />}
                   </IconButton>
                   <IconButton
                     size="small"
@@ -435,8 +423,8 @@ const Explore = () => {
                     position: 'absolute',
                     bottom: 8,
                     right: 8,
-                    bgcolor: 'rgba(255,255,255,0.9)',
-                    '&:hover': { bgcolor: 'rgba(255,255,255,0.95)' }
+                    bgcolor: 'rgba(128,128,128,0.8)',
+                    '&:hover': { bgcolor: 'rgba(128,128,128,0.9)' }
                   }}
                   onClick={(e) => {
                     e.stopPropagation()
@@ -447,14 +435,14 @@ const Explore = () => {
                 </IconButton>
               </Box>
 
-              <CardContent sx={{ p: 2 }}>
+              <CardContent sx={{ p: 2, flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
                 <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
                   {look.title}
                 </Typography>
                 <Typography variant="body2" color="primary" sx={{ mb: 1, fontWeight: 500 }}>
                   {look.sourceType}
                 </Typography>
-                <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
+                <Typography variant="body2" color="textSecondary" sx={{ mb: 2, flexGrow: 1 }}>
                   {look.description || look.notes || 'No description available'}
                 </Typography>
 

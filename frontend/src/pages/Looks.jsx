@@ -205,23 +205,26 @@ const Looks = () => {
     }
   }
 
-  const handleLikeLook = (lookId) => {
-    setLikedLooks(prev => {
-      const newSet = new Set(prev)
-      if (newSet.has(lookId)) {
-        newSet.delete(lookId)
-      } else {
-        newSet.add(lookId)
+  const handleLikeLook = async (lookId) => {
+    try {
+      console.log('Saving look with ID:', lookId)
+      const response = await looksAPI.toggleLikeLook(lookId)
+      
+      if (response.data) {
+        console.log('Save response:', response.data)
+        // Update the look in the list with the new save status
+        setLooks(prev => prev.map(look => 
+          look.id === lookId 
+            ? { ...look, isLiked: response.data.isLiked, isSaved: response.data.isSaved }
+            : look
+        ))
+        
+        setSuccessMessage(response.data.message)
       }
-      return newSet
-    })
-    
-    // Update the look in the list
-    setLooks(prev => prev.map(look => 
-      look.id === lookId 
-        ? { ...look, isLiked: !look.isLiked }
-        : look
-    ))
+    } catch (error) {
+      console.error('Error toggling save:', error)
+      setError('Failed to update save status. Please try again.')
+    }
   }
 
   const handleShareLook = (look) => {
@@ -442,6 +445,10 @@ const Looks = () => {
                     startIcon={look.isLiked ? <Favorite /> : <FavoriteBorder />}
                     onClick={() => handleLikeLook(look.id)}
                     color={look.isLiked ? 'error' : 'inherit'}
+                    sx={{
+                      bgcolor: 'rgba(128,128,128,0.1)',
+                      '&:hover': { bgcolor: 'rgba(128,128,128,0.2)' }
+                    }}
                   >
                     {look.isLiked ? 'Liked' : 'Like'}
                   </Button>

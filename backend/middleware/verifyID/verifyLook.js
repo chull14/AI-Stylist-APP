@@ -14,8 +14,13 @@ const verifyLook = async (req, res, next) => {
       return res.status(404).json({ message: 'Look not found' });
     }
 
-    if (String(look.userId) !== userId) {
-      return res.status(403).json({ message: 'You do not have permission to access this look' });
+    // For like operations, allow access to any look (since likes are now saves)
+    // For edit and delete operations, require ownership
+    const isLikeOperation = req.path.includes('/like');
+    const isEditOrDeleteOperation = req.method === 'PUT' || req.method === 'DELETE';
+
+    if (isEditOrDeleteOperation && String(look.userId) !== userId) {
+      return res.status(403).json({ message: 'You do not have permission to modify this look' });
     }
 
     req.look = look;

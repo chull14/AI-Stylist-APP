@@ -121,6 +121,15 @@ export const looksAPI = {
     return api.get(`/api/users/${userId}/looks`)
   },
 
+  // Get user's saved looks
+  getSavedLooks: () => {
+    const userId = getUserId()
+    console.log('API: getSavedLooks called with userId:', userId)
+    const url = `/api/users/${userId}/looks/saved`
+    console.log('API: Making request to:', url)
+    return api.get(url)
+  },
+
   // Create a single look
   createLook: (lookData) => {
     const userId = getUserId()
@@ -187,6 +196,15 @@ export const looksAPI = {
   deleteLook: (lookId) => {
     const userId = getUserId()
     return api.delete(`/api/users/${userId}/looks/${lookId}`)
+  },
+
+  // Like or unlike a look (now also handles saving)
+  toggleLikeLook: (lookId) => {
+    const userId = getUserId()
+    console.log('API: toggleLikeLook called with lookId:', lookId, 'userId:', userId)
+    const url = `/api/users/${userId}/looks/${lookId}/like`
+    console.log('API: Making request to:', url)
+    return api.patch(url)
   },
 
   // Add a look to a gallery

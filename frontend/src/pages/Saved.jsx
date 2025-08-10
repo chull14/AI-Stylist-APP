@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
-import { galleryAPI } from '../services/api'
+import { galleryAPI, looksAPI } from '../services/api'
+import { useAuth } from '../context/AuthContext'
 import {
   Box,
   Typography,
@@ -22,7 +23,10 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Stack
+  Stack,
+  Alert,
+  CircularProgress,
+  Snackbar
 } from '@mui/material'
 import {
   Favorite,
@@ -34,13 +38,21 @@ import {
   Delete,
   Edit,
   Add,
-  AutoAwesome
+  AutoAwesome,
+  Refresh
 } from '@mui/icons-material'
 
 const Saved = () => {
+  const { user } = useAuth()
   const [activeTab, setActiveTab] = useState(0)
   const [openCreateDialog, setOpenCreateDialog] = useState(false)
   const [openAICreateDialog, setOpenAICreateDialog] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
+  const [successMessage, setSuccessMessage] = useState('')
+  const [savedLooks, setSavedLooks] = useState([])
+  const [savedGalleries, setSavedGalleries] = useState([])
+  
   const [newGallery, setNewGallery] = useState({
     title: '',
     description: '',
@@ -54,44 +66,193 @@ const Saved = () => {
     style: '',
     occasion: ''
   })
-  const [loading, setLoading] = useState(false)
-
-  const savedLooks = []
-  const savedGalleries = []
 
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue)
   }
 
+  // Load saved looks from backend
+  const loadSavedLooks = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      console.log('Loading saved looks...')
+      const response = await looksAPI.getSavedLooks()
+      
+      console.log('Saved looks response:', response.data)
+      
+      if (response.data && response.data.looks) {
+        const transformedLooks = response.data.looks.map(look => ({
+          id: look._id,
+          title: look.title,
+          description: look.description,
+          image: look.image || (look.imagePath ? `http://localhost:8000/uploads/${look.imagePath.split('/').pop()}` : 'https://via.placeholder.com/400x500/ff9ff3/ffffff?text=Look'),
+          style: look.style,
+          occasion: look.occasion,
+          aesthetic: look.aesthetic || [],
+          tags: look.tags || [],
+          notes: look.notes,
+          sourceType: look.sourceType || 'Uploaded',
+          isLiked: look.isLiked,
+          isSaved: look.isSaved,
+          createdAt: look.createdAt,
+          updatedAt: look.updatedAt
+        }))
+        console.log('Transformed saved looks:', transformedLooks)
+        setSavedLooks(transformedLooks)
+      } else {
+        console.log('No saved looks found')
+        setSavedLooks([])
+      }
+    } catch (error) {
+      console.error('Error loading saved looks:', error)
+      setError('Failed to load saved looks. Please try again.')
+      setSavedLooks([])
+    } finally {
+      setLoading(false)
+    }
+  }
+
   // Load saved galleries from backend
+  const loadSavedGalleries = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      const response = await galleryAPI.getAllGalleries()
+      
+      if (response.data && response.data.galleries) {
+        // Filter for saved galleries (you might want to add a savedBy field to galleries)
+        const transformedGalleries = response.data.galleries.map(gallery => ({
+          id: gallery._id,
+          title: gallery.title,
+          description: gallery.description,
+          coverImage: gallery.coverImage || 'https://via.placeholder.com/400x600/4ecdc4/ffffff?text=Gallery',
+          imageCount: gallery.looksCount || 0,
+          followers: gallery.followers || 0,
+          author: user?.username || 'You',
+          authorAvatar: user?.avatar || `https://via.placeholder.com/40x40/4ecdc4/ffffff?text=${user?.username?.charAt(0) || 'U'}`,
+          tags: gallery.tags || ['Fashion'],
+          isSaved: true, // Since this is the saved page
+          isLiked: false,
+          createdAt: gallery.createdAt,
+          updatedAt: gallery.updatedAt
+        }))
+        setSavedGalleries(transformedGalleries)
+      } else {
+        setSavedGalleries([])
+      }
+    } catch (error) {
+      console.error('Error loading saved galleries:', error)
+      setError('Failed to load saved galleries. Please try again.')
+      setSavedGalleries([])
+    } finally {
+      setLoading(false)
+    }
+  }
+
   useEffect(() => {
-    const loadSavedGalleries = async () => {
+    if (activeTab === 0) {
+      loadSavedLooks()
+    } else {
+      loadSavedGalleries()
+    }
+  }, [activeTab])
+
+  const handleLikeLook = async (lookId) => {
+    try {
+      console.log('Saving/unsaving look with ID:', lookId)
+      const response = await looksAPI.toggleLikeLook(lookId)
+      
+      if (response.data) {
+        console.log('Save response:', response.data)
+        // Update the look in the list with the new save status
+        setSavedLooks(prev => prev.map(look => 
+          look.id === lookId 
+            ? { ...look, isLiked: response.data.isLiked, isSaved: response.data.isSaved }
+            : look
+        ))
+        
+        // If the look was unsaved, remove it from the list
+        if (!response.data.isSaved) {
+          setSavedLooks(prev => prev.filter(look => look.id !== lookId))
+        }
+        
+        setSuccessMessage(response.data.message)
+      }
+    } catch (error) {
+      console.error('Error toggling save:', error)
+      setError('Failed to update save status. Please try again.')
+    }
+  }
+
+
+
+  const handleShareLook = (look) => {
+    if (navigator.share) {
+      navigator.share({
+        title: look.title,
+        text: look.description,
+        url: window.location.href
+      })
+    } else {
+      // Fallback: copy to clipboard
+      navigator.clipboard.writeText(`${look.title}: ${look.description}`)
+      setSuccessMessage('Look link copied to clipboard!')
+    }
+  }
+
+  const handleDeleteLook = async (lookId) => {
+    if (window.confirm('Are you sure you want to delete this look?')) {
       try {
         setLoading(true)
-        const response = await galleryAPI.getAllGalleries()
-        // TODO: Replace with actual backend data
-        console.log('Loaded saved galleries:', response.data)
+        await looksAPI.deleteLook(lookId)
+        setSuccessMessage('Look deleted successfully!')
+        // Remove from saved looks list
+        setSavedLooks(prev => prev.filter(look => look.id !== lookId))
       } catch (error) {
-        console.error('Error loading saved galleries:', error)
+        console.error('Error deleting look:', error)
+        setError('Failed to delete look. Please try again.')
       } finally {
         setLoading(false)
       }
     }
-
-    loadSavedGalleries()
-  }, [])
+  }
 
   return (
     <Box>
       {/* Header */}
       <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" gutterBottom>
-          Saved Items
-        </Typography>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+          <Typography variant="h4" gutterBottom>
+            Saved Items
+          </Typography>
+          <Button
+            startIcon={<Refresh />}
+            onClick={activeTab === 0 ? loadSavedLooks : loadSavedGalleries}
+            disabled={loading}
+            variant="outlined"
+          >
+            Refresh
+          </Button>
+        </Box>
         <Typography variant="body1" color="textSecondary">
           Your saved looks and galleries for easy access.
         </Typography>
       </Box>
+
+      {/* Error Alert */}
+      {error && (
+        <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError(null)}>
+          {error}
+        </Alert>
+      )}
+
+      {/* Loading State */}
+      {loading && (
+        <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+          <CircularProgress />
+        </Box>
+      )}
 
       {/* Tabs and Action Buttons */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
@@ -128,30 +289,41 @@ const Saved = () => {
             Saved Runway Looks
           </Typography>
           
-          {savedLooks.length === 0 ? (
+          {!loading && savedLooks.length === 0 ? (
             <Box sx={{ textAlign: 'center', py: 8 }}>
               <Typography variant="h6" color="text.secondary" gutterBottom>
                 No saved looks yet
               </Typography>
-              <Typography variant="body1" color="text.secondary">
+              <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
                 Save runway looks from the Explore page to see them here
               </Typography>
+              <Button
+                variant="contained"
+                onClick={() => window.location.href = '/explore'}
+              >
+                Explore Looks
+              </Button>
             </Box>
           ) : (
-            <Box sx={{ columnCount: { xs: 1, sm: 2, md: 3, lg: 4 }, columnGap: 2 }}>
+            <Box sx={{ 
+              display: 'grid',
+              gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)', lg: 'repeat(4, 1fr)' },
+              gap: 2
+            }}>
               {savedLooks.map((look) => (
               <Box
                 key={look.id}
                 sx={{
-                  breakInside: 'avoid',
-                  mb: 2,
-                  display: 'inline-block',
-                  width: '100%'
+                  display: 'flex',
+                  flexDirection: 'column'
                 }}
               >
                 <Card 
                   sx={{ 
                     cursor: 'pointer',
+                    height: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
                     '&:hover': { 
                       transform: 'translateY(-4px)',
                       transition: 'transform 0.2s ease-in-out',
@@ -180,21 +352,24 @@ const Saved = () => {
                         '&:hover': { opacity: 1 }
                       }}
                     >
+
                       <IconButton
                         size="small"
                         sx={{ bgcolor: 'rgba(255,255,255,0.9)', '&:hover': { bgcolor: 'rgba(255,255,255,0.95)' } }}
-                      >
-                        <Bookmark color="primary" />
-                      </IconButton>
-                      <IconButton
-                        size="small"
-                        sx={{ bgcolor: 'rgba(255,255,255,0.9)', '&:hover': { bgcolor: 'rgba(255,255,255,0.95)' } }}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleShareLook(look)
+                        }}
                       >
                         <Share />
                       </IconButton>
                       <IconButton
                         size="small"
                         sx={{ bgcolor: 'rgba(255,255,255,0.9)', '&:hover': { bgcolor: 'rgba(255,255,255,0.95)' } }}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleDeleteLook(look.id)
+                        }}
                       >
                         <Delete />
                       </IconButton>
@@ -207,46 +382,57 @@ const Saved = () => {
                         position: 'absolute',
                         bottom: 8,
                         right: 8,
-                        bgcolor: 'rgba(255,255,255,0.9)',
-                        '&:hover': { bgcolor: 'rgba(255,255,255,0.95)' }
+                        bgcolor: 'rgba(128,128,128,0.8)',
+                        '&:hover': { bgcolor: 'rgba(128,128,128,0.9)' }
+                      }}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleLikeLook(look.id)
                       }}
                     >
-                      <Favorite color="error" />
+                      {look.isLiked ? <Favorite color="error" /> : <FavoriteBorder />}
                     </IconButton>
                   </Box>
 
-                  <CardContent sx={{ p: 2 }}>
+                  <CardContent sx={{ p: 2, flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
                     <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
                       {look.title}
                     </Typography>
                     <Typography variant="body2" color="primary" sx={{ mb: 1, fontWeight: 500 }}>
-                      {look.designer}
+                      {look.sourceType}
+                    </Typography>
+                    <Typography variant="body2" color="textSecondary" sx={{ mb: 2, flexGrow: 1 }}>
+                      {look.description || look.notes || 'No description available'}
                     </Typography>
 
-                    {/* Season Info */}
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                      <Chip label={look.season} size="small" color="secondary" />
-                    </Box>
+                    {/* Aesthetic Info */}
+                    {look.aesthetic && look.aesthetic.length > 0 && (
+                      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                        <Chip label={look.aesthetic[0]} size="small" color="secondary" />
+                        {look.aesthetic.length > 1 && (
+                          <Chip label={`+${look.aesthetic.length - 1} more`} size="small" variant="outlined" sx={{ ml: 1 }} />
+                        )}
+                      </Box>
+                    )}
 
                     {/* Stats */}
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
                       <Typography variant="body2" color="textSecondary">
-                        {look.likes.toLocaleString()} likes
-                      </Typography>
-                      <Typography variant="body2" color="textSecondary">
-                        Saved {look.savedDate}
+                        {look.createdAt ? `Saved ${new Date(look.createdAt).toLocaleDateString()}` : 'Recently saved'}
                       </Typography>
                     </Box>
 
                     {/* Tags */}
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                      {look.tags.slice(0, 3).map((tag) => (
-                        <Chip key={tag} label={tag} size="small" variant="outlined" />
-                      ))}
-                      {look.tags.length > 3 && (
-                        <Chip label={`+${look.tags.length - 3}`} size="small" variant="outlined" />
-                      )}
-                    </Box>
+                    {look.tags && look.tags.length > 0 && (
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                        {look.tags.slice(0, 3).map((tag) => (
+                          <Chip key={tag} label={tag} size="small" variant="outlined" />
+                        ))}
+                        {look.tags.length > 3 && (
+                          <Chip label={`+${look.tags.length - 3}`} size="small" variant="outlined" />
+                        )}
+                      </Box>
+                    )}
                   </CardContent>
                 </Card>
               </Box>
@@ -263,14 +449,20 @@ const Saved = () => {
             Saved Galleries
           </Typography>
           
-          {savedGalleries.length === 0 ? (
+          {!loading && savedGalleries.length === 0 ? (
             <Box sx={{ textAlign: 'center', py: 8 }}>
               <Typography variant="h6" color="text.secondary" gutterBottom>
                 No saved galleries yet
               </Typography>
-              <Typography variant="body1" color="text.secondary">
+              <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
                 Create galleries using saved looks or AI assistant
               </Typography>
+              <Button
+                variant="contained"
+                onClick={() => window.location.href = '/gallery'}
+              >
+                Create Gallery
+              </Button>
             </Box>
           ) : (
             <Grid container spacing={3}>
@@ -342,7 +534,7 @@ const Saved = () => {
                         {gallery.imageCount} pins
                       </Typography>
                       <Typography variant="body2" color="textSecondary">
-                        Created {gallery.createdDate}
+                        {gallery.createdAt ? `Created ${new Date(gallery.createdAt).toLocaleDateString()}` : 'Recently created'}
                       </Typography>
                     </Box>
 
@@ -391,36 +583,41 @@ const Saved = () => {
           />
           <TextField
             margin="dense"
-            label="Cover Image URL"
-            fullWidth
-            variant="outlined"
-            value={newGallery.coverImage}
-            onChange={(e) => setNewGallery({...newGallery, coverImage: e.target.value})}
-            sx={{ mb: 2 }}
-          />
-          <TextField
-            margin="dense"
             label="Tags (comma separated)"
             fullWidth
             variant="outlined"
             placeholder="Summer, Casual, Street Style"
             value={newGallery.tags.join(', ')}
-            onChange={(e) => setNewGallery({...newGallery, tags: e.target.value.split(',').map(tag => tag.trim())})}
+            onChange={(e) => setNewGallery({...newGallery, tags: e.target.value.split(',').map(tag => tag.trim()).filter(Boolean)})}
           />
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpenCreateDialog(false)}>Cancel</Button>
           <Button 
-            onClick={() => {
-              // TODO: Save gallery to backend
-              console.log('Creating gallery:', newGallery)
-              setOpenCreateDialog(false)
-              setNewGallery({title: '', description: '', coverImage: '', tags: []})
+            onClick={async () => {
+              try {
+                setLoading(true)
+                setError(null)
+                
+                const response = await galleryAPI.createGallery(newGallery)
+                
+                if (response.data) {
+                  setSuccessMessage('Gallery created successfully!')
+                  setOpenCreateDialog(false)
+                  setNewGallery({title: '', description: '', coverImage: '', tags: []})
+                  loadSavedGalleries() // Refresh the list
+                }
+              } catch (error) {
+                console.error('Error creating gallery:', error)
+                setError('Failed to create gallery. Please try again.')
+              } finally {
+                setLoading(false)
+              }
             }} 
             variant="contained"
-            disabled={!newGallery.title || !newGallery.description}
+            disabled={!newGallery.title || !newGallery.description || loading}
           >
-            Create Gallery
+            {loading ? 'Creating...' : 'Create Gallery'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -523,7 +720,7 @@ const Saved = () => {
 
             <TextField
               margin="dense"
-              label="Gallery Title"
+              label="Gallery Title (Optional)"
               fullWidth
               variant="outlined"
               placeholder="AI will suggest a title based on your preferences"
@@ -533,22 +730,54 @@ const Saved = () => {
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpenAICreateDialog(false)}>Cancel</Button>
+          <Button onClick={() => setOpenAICreateDialog(false)} disabled={loading}>Cancel</Button>
           <Button 
-            onClick={() => {
-              // TODO: Call AI service to generate gallery
-              console.log('AI Gallery Params:', aiGalleryParams)
-              setOpenAICreateDialog(false)
-              setAIGalleryParams({aesthetic: '', colors: '', season: '', style: '', occasion: '', title: ''})
+            onClick={async () => {
+              try {
+                setLoading(true)
+                setError(null)
+                
+                const galleryData = {
+                  title: aiGalleryParams.title || `AI ${aiGalleryParams.aesthetic} Gallery`,
+                  description: `AI-generated gallery with ${aiGalleryParams.aesthetic} aesthetic, ${aiGalleryParams.colors} colors, ${aiGalleryParams.season} season`,
+                  tags: [aiGalleryParams.aesthetic, aiGalleryParams.colors, aiGalleryParams.season, aiGalleryParams.style, aiGalleryParams.occasion].filter(Boolean)
+                }
+                
+                const response = await galleryAPI.createGallery(galleryData)
+                
+                if (response.data) {
+                  setSuccessMessage('AI Gallery created successfully!')
+                  setOpenAICreateDialog(false)
+                  setAIGalleryParams({aesthetic: '', colors: '', season: '', style: '', occasion: '', title: ''})
+                  loadSavedGalleries() // Refresh the list
+                }
+              } catch (error) {
+                console.error('Error creating AI gallery:', error)
+                setError('Failed to create AI gallery. Please try again.')
+              } finally {
+                setLoading(false)
+              }
             }} 
             variant="contained"
             color="secondary"
-            disabled={!aiGalleryParams.aesthetic || !aiGalleryParams.colors || !aiGalleryParams.season}
+            disabled={!aiGalleryParams.aesthetic || !aiGalleryParams.colors || !aiGalleryParams.season || loading}
           >
-            Generate AI Gallery
+            {loading ? 'Generating...' : 'Generate AI Gallery'}
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Success Snackbar */}
+      <Snackbar
+        open={!!successMessage}
+        autoHideDuration={6000}
+        onClose={() => setSuccessMessage('')}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Alert onClose={() => setSuccessMessage('')} severity="success" sx={{ width: '100%' }}>
+          {successMessage}
+        </Alert>
+      </Snackbar>
     </Box>
   )
 }

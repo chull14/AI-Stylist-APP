@@ -59,15 +59,17 @@ const lookSchema = new Schema({
     default: 'saved' 
   },
 
-  savedBy: [{ 
+  // Track which users have liked this look
+  likedBy: [{ 
     type: mongoose.Schema.Types.ObjectId, 
     ref: 'User' 
   }],
   
-  isLiked: {
-    type: Boolean,
-    default: false
-  }
+  // Track which users have saved this look
+  savedBy: [{ 
+    type: mongoose.Schema.Types.ObjectId, 
+    ref: 'User' 
+  }]
 }, { timestamps: true });
 
 const Look = mongoose.model('Look', lookSchema);
