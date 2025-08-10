@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { galleryAPI } from '../services/api'
 import { galleryImages } from '../utils/fashionImages'
+import { useAuth } from '../context/AuthContext'
 import {
   Box,
   Typography,
@@ -24,7 +25,10 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Stack
+  Stack,
+  Alert,
+  CircularProgress,
+  Snackbar
 } from '@mui/material'
 import {
   Favorite,
@@ -36,30 +40,89 @@ import {
   MoreVert,
   Bookmark,
   BookmarkBorder,
-  AutoAwesome
+  AutoAwesome,
+  Refresh
 } from '@mui/icons-material'
 
 const Gallery = () => {
+  const { user } = useAuth()
+  const [galleries, setGalleries] = useState([])
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [openCreateDialog, setOpenCreateDialog] = useState(false)
   const [openAICreateDialog, setOpenAICreateDialog] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
+  const [successMessage, setSuccessMessage] = useState('')
+  const [likedGalleries, setLikedGalleries] = useState(new Set())
+  const [savedGalleries, setSavedGalleries] = useState(new Set())
+  
   const [newGallery, setNewGallery] = useState({
     title: '',
     description: '',
     coverImage: '',
     tags: []
   })
+  
   const [aiGalleryParams, setAIGalleryParams] = useState({
     aesthetic: '',
     colors: '',
     season: '',
     style: '',
-    occasion: ''
+    occasion: '',
+    title: ''
   })
-  const [loading, setLoading] = useState(false)
 
-  const galleries = [
+  const categories = [
+    { value: 'all', label: 'All Galleries' },
+    { value: 'summer', label: 'Summer Style' },
+    { value: 'evening', label: 'Evening Wear' },
+    { value: 'minimalist', label: 'Minimalist' },
+    { value: 'boho', label: 'Bohemian' },
+    { value: 'workwear', label: 'Workwear' },
+    { value: 'vintage', label: 'Vintage' }
+  ]
+
+  // Load galleries from backend
+  const loadGalleries = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      const response = await galleryAPI.getAllGalleries()
+      
+      if (response.data && response.data.galleries) {
+        // Transform backend data to match frontend structure
+        const transformedGalleries = response.data.galleries.map(gallery => ({
+          id: gallery._id,
+          title: gallery.title,
+          description: gallery.description,
+          coverImage: gallery.coverImage || galleryImages.summerStyle, // fallback image
+          imageCount: gallery.looksCount || 0,
+          followers: gallery.followers || 0,
+          author: user?.username || 'You',
+          authorAvatar: user?.avatar || `https://via.placeholder.com/40x40/4ecdc4/ffffff?text=${user?.username?.charAt(0) || 'U'}`,
+          tags: gallery.tags || ['Fashion'],
+          isSaved: savedGalleries.has(gallery._id),
+          isLiked: likedGalleries.has(gallery._id),
+          createdAt: gallery.createdAt,
+          updatedAt: gallery.updatedAt
+        }))
+        setGalleries(transformedGalleries)
+      } else {
+        setGalleries([])
+      }
+    } catch (error) {
+      console.error('Error loading galleries:', error)
+      setError('Failed to load galleries. Please try again.')
+      // Fallback to sample data if API fails
+      setGalleries(getSampleGalleries())
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Sample galleries for fallback
+  const getSampleGalleries = () => [
     {
       id: 1,
       title: 'Summer Street Style',
@@ -98,73 +161,10 @@ const Gallery = () => {
       tags: ['Minimalist', 'Clean', 'Modern', 'Simple'],
       isSaved: false,
       isLiked: true
-    },
-    {
-      id: 4,
-      title: 'Boho Vibes',
-      description: 'Bohemian and free-spirited looks for the adventurous soul',
-      coverImage: galleryImages.bohoVibes,
-      imageCount: 15,
-      followers: 67,
-      author: 'BohoChic',
-      authorAvatar: 'https://via.placeholder.com/40x40/96ceb4/ffffff?text=B',
-      tags: ['Bohemian', 'Free-spirited', 'Natural', 'Creative'],
-      isSaved: true,
-      isLiked: true
-    },
-    {
-      id: 5,
-      title: 'Workwear Essentials',
-      description: 'Professional and polished looks for the workplace',
-      coverImage: galleryImages.workwearEssentials,
-      imageCount: 28,
-      followers: 189,
-      author: 'CareerStyle',
-      authorAvatar: 'https://via.placeholder.com/40x40/f7b731/ffffff?text=C',
-      tags: ['Professional', 'Work', 'Business', 'Polished'],
-      isSaved: false,
-      isLiked: false
-    },
-    {
-      id: 6,
-      title: 'Vintage Revival',
-      description: 'Classic vintage looks with a modern twist',
-      coverImage: galleryImages.vintageRevival,
-      imageCount: 22,
-      followers: 145,
-      author: 'VintageVibe',
-      authorAvatar: 'https://via.placeholder.com/40x40/e17055/ffffff?text=V',
-      tags: ['Vintage', 'Classic', 'Retro', 'Timeless'],
-      isSaved: true,
-      isLiked: true
     }
   ]
 
-  const categories = [
-    { value: 'all', label: 'All Galleries' },
-    { value: 'summer', label: 'Summer Style' },
-    { value: 'evening', label: 'Evening Wear' },
-    { value: 'minimalist', label: 'Minimalist' },
-    { value: 'boho', label: 'Bohemian' },
-    { value: 'workwear', label: 'Workwear' },
-    { value: 'vintage', label: 'Vintage' }
-  ]
-
-  // Load galleries from backend
   useEffect(() => {
-    const loadGalleries = async () => {
-      try {
-        setLoading(true)
-        const response = await galleryAPI.getAllGalleries()
-        // TODO: Replace with actual backend data
-        console.log('Loaded galleries:', response.data)
-      } catch (error) {
-        console.error('Error loading galleries:', error)
-      } finally {
-        setLoading(false)
-      }
-    }
-
     loadGalleries()
   }, [])
 
@@ -179,13 +179,145 @@ const Gallery = () => {
     return matchesSearch && matchesCategory
   })
 
+  const handleCreateGallery = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      
+      const galleryData = {
+        title: newGallery.title,
+        description: newGallery.description,
+        tags: newGallery.tags
+      }
+      
+      const response = await galleryAPI.createGallery(galleryData)
+      
+      if (response.data) {
+        setSuccessMessage('Gallery created successfully!')
+        setOpenCreateDialog(false)
+        setNewGallery({title: '', description: '', coverImage: '', tags: []})
+        loadGalleries() // Refresh the list
+      }
+    } catch (error) {
+      console.error('Error creating gallery:', error)
+      setError('Failed to create gallery. Please try again.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleCreateAIGallery = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      
+      const galleryData = {
+        title: aiGalleryParams.title || `AI ${aiGalleryParams.aesthetic} Gallery`,
+        description: `AI-generated gallery with ${aiGalleryParams.aesthetic} aesthetic, ${aiGalleryParams.colors} colors, ${aiGalleryParams.season} season`,
+        tags: [aiGalleryParams.aesthetic, aiGalleryParams.colors, aiGalleryParams.season, aiGalleryParams.style, aiGalleryParams.occasion].filter(Boolean)
+      }
+      
+      const response = await galleryAPI.createGallery(galleryData)
+      
+      if (response.data) {
+        setSuccessMessage('AI Gallery created successfully!')
+        setOpenAICreateDialog(false)
+        setAIGalleryParams({aesthetic: '', colors: '', season: '', style: '', occasion: '', title: ''})
+        loadGalleries() // Refresh the list
+      }
+    } catch (error) {
+      console.error('Error creating AI gallery:', error)
+      setError('Failed to create AI gallery. Please try again.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleLikeGallery = (galleryId) => {
+    setLikedGalleries(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(galleryId)) {
+        newSet.delete(galleryId)
+      } else {
+        newSet.add(galleryId)
+      }
+      return newSet
+    })
+    
+    // Update the gallery in the list
+    setGalleries(prev => prev.map(gallery => 
+      gallery.id === galleryId 
+        ? { ...gallery, isLiked: !gallery.isLiked }
+        : gallery
+    ))
+  }
+
+  const handleSaveGallery = (galleryId) => {
+    setSavedGalleries(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(galleryId)) {
+        newSet.delete(galleryId)
+      } else {
+        newSet.add(galleryId)
+      }
+      return newSet
+    })
+    
+    // Update the gallery in the list
+    setGalleries(prev => prev.map(gallery => 
+      gallery.id === galleryId 
+        ? { ...gallery, isSaved: !gallery.isSaved }
+        : gallery
+    ))
+  }
+
+  const handleShareGallery = (gallery) => {
+    if (navigator.share) {
+      navigator.share({
+        title: gallery.title,
+        text: gallery.description,
+        url: window.location.href
+      })
+    } else {
+      // Fallback: copy to clipboard
+      navigator.clipboard.writeText(`${gallery.title}: ${gallery.description}`)
+      setSuccessMessage('Gallery link copied to clipboard!')
+    }
+  }
+
+  const handleDeleteGallery = async (galleryId) => {
+    if (window.confirm('Are you sure you want to delete this gallery?')) {
+      try {
+        setLoading(true)
+        await galleryAPI.deleteGallery(galleryId)
+        setSuccessMessage('Gallery deleted successfully!')
+        loadGalleries() // Refresh the list
+      } catch (error) {
+        console.error('Error deleting gallery:', error)
+        setError('Failed to delete gallery. Please try again.')
+      } finally {
+        setLoading(false)
+      }
+    }
+  }
+
   return (
     <Box>
       {/* Header */}
       <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" gutterBottom>
-          Inspiration Galleries
-        </Typography>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+          <Typography variant="h4" gutterBottom>
+            Inspiration Galleries
+          </Typography>
+          <Button
+            startIcon={<Refresh />}
+            onClick={loadGalleries}
+            disabled={loading}
+            variant="outlined"
+          >
+            Refresh
+          </Button>
+        </Box>
         <Typography variant="body1" color="textSecondary" sx={{ mb: 3 }}>
           Discover curated fashion moodboards and style inspiration from around the world.
         </Typography>
@@ -244,6 +376,42 @@ const Gallery = () => {
         </Box>
       </Box>
 
+      {/* Error Alert */}
+      {error && (
+        <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError(null)}>
+          {error}
+        </Alert>
+      )}
+
+      {/* Loading State */}
+      {loading && filteredGalleries.length === 0 && (
+        <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+          <CircularProgress />
+        </Box>
+      )}
+
+      {/* Empty State */}
+      {!loading && filteredGalleries.length === 0 && (
+        <Box sx={{ textAlign: 'center', py: 4 }}>
+          <Typography variant="h6" color="textSecondary" gutterBottom>
+            No galleries found
+          </Typography>
+          <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
+            {searchTerm || selectedCategory !== 'all' 
+              ? 'Try adjusting your search or filters'
+              : 'Create your first gallery to get started!'
+            }
+          </Typography>
+          <Button
+            variant="contained"
+            startIcon={<Add />}
+            onClick={() => setOpenCreateDialog(true)}
+          >
+            Create Gallery
+          </Button>
+        </Box>
+      )}
+
       {/* Masonry Grid */}
       <Box sx={{ columnCount: { xs: 1, sm: 2, md: 3, lg: 4 }, columnGap: 2 }}>
         {filteredGalleries.map((gallery) => (
@@ -290,18 +458,30 @@ const Gallery = () => {
                   <IconButton
                     size="small"
                     sx={{ bgcolor: 'rgba(255,255,255,0.9)', '&:hover': { bgcolor: 'rgba(255,255,255,0.95)' } }}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleSaveGallery(gallery.id)
+                    }}
                   >
                     {gallery.isSaved ? <Bookmark color="primary" /> : <BookmarkBorder />}
                   </IconButton>
                   <IconButton
                     size="small"
                     sx={{ bgcolor: 'rgba(255,255,255,0.9)', '&:hover': { bgcolor: 'rgba(255,255,255,0.95)' } }}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleShareGallery(gallery)
+                    }}
                   >
                     <Share />
                   </IconButton>
                   <IconButton
                     size="small"
                     sx={{ bgcolor: 'rgba(255,255,255,0.9)', '&:hover': { bgcolor: 'rgba(255,255,255,0.95)' } }}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleDeleteGallery(gallery.id)
+                    }}
                   >
                     <MoreVert />
                   </IconButton>
@@ -316,6 +496,10 @@ const Gallery = () => {
                     right: 8,
                     bgcolor: 'rgba(255,255,255,0.9)',
                     '&:hover': { bgcolor: 'rgba(255,255,255,0.95)' }
+                  }}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleLikeGallery(gallery.id)
                   }}
                 >
                   {gallery.isLiked ? <Favorite color="error" /> : <FavoriteBorder />}
@@ -390,40 +574,18 @@ const Gallery = () => {
           />
           <MuiTextField
             margin="dense"
-            label="Cover Image URL"
-            fullWidth
-            variant="outlined"
-            value={newGallery.coverImage}
-            onChange={(e) => setNewGallery({...newGallery, coverImage: e.target.value})}
-            sx={{ mb: 2 }}
-          />
-          <MuiTextField
-            margin="dense"
             label="Tags (comma separated)"
             fullWidth
             variant="outlined"
             placeholder="Summer, Casual, Street Style"
             value={newGallery.tags.join(', ')}
-            onChange={(e) => setNewGallery({...newGallery, tags: e.target.value.split(',').map(tag => tag.trim())})}
+            onChange={(e) => setNewGallery({...newGallery, tags: e.target.value.split(',').map(tag => tag.trim()).filter(Boolean)})}
           />
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpenCreateDialog(false)}>Cancel</Button>
           <Button 
-            onClick={async () => {
-              try {
-                setLoading(true)
-                await galleryAPI.createGallery(newGallery)
-                console.log('Gallery created successfully')
-                setOpenCreateDialog(false)
-                setNewGallery({title: '', description: '', coverImage: '', tags: []})
-                // TODO: Refresh galleries list
-              } catch (error) {
-                console.error('Error creating gallery:', error)
-              } finally {
-                setLoading(false)
-              }
-            }} 
+            onClick={handleCreateGallery}
             variant="contained"
             disabled={!newGallery.title || !newGallery.description || loading}
           >
@@ -530,7 +692,7 @@ const Gallery = () => {
 
             <MuiTextField
               margin="dense"
-              label="Gallery Title"
+              label="Gallery Title (Optional)"
               fullWidth
               variant="outlined"
               placeholder="AI will suggest a title based on your preferences"
@@ -542,29 +704,7 @@ const Gallery = () => {
         <DialogActions>
           <Button onClick={() => setOpenAICreateDialog(false)}>Cancel</Button>
           <Button 
-            onClick={async () => {
-              try {
-                setLoading(true)
-                // TODO: Call AI service to generate gallery
-                console.log('AI Gallery Params:', aiGalleryParams)
-                // For now, create a gallery with AI parameters
-                const aiGalleryData = {
-                  title: aiGalleryParams.title || `AI ${aiGalleryParams.aesthetic} Gallery`,
-                  description: `AI-generated gallery with ${aiGalleryParams.aesthetic} aesthetic, ${aiGalleryParams.colors} colors, ${aiGalleryParams.season} season`,
-                  coverImage: 'https://via.placeholder.com/400x600/4ecdc4/ffffff?text=AI+Generated',
-                  tags: [aiGalleryParams.aesthetic, aiGalleryParams.colors, aiGalleryParams.season, aiGalleryParams.style, aiGalleryParams.occasion].filter(Boolean)
-                }
-                await galleryAPI.createGallery(aiGalleryData)
-                console.log('AI Gallery created successfully')
-                setOpenAICreateDialog(false)
-                setAIGalleryParams({aesthetic: '', colors: '', season: '', style: '', occasion: '', title: ''})
-                // TODO: Refresh galleries list
-              } catch (error) {
-                console.error('Error creating AI gallery:', error)
-              } finally {
-                setLoading(false)
-              }
-            }} 
+            onClick={handleCreateAIGallery}
             variant="contained"
             color="secondary"
             disabled={!aiGalleryParams.aesthetic || !aiGalleryParams.colors || !aiGalleryParams.season || loading}
@@ -587,6 +727,18 @@ const Gallery = () => {
       >
         <Add />
       </Fab>
+
+      {/* Success Snackbar */}
+      <Snackbar
+        open={!!successMessage}
+        autoHideDuration={6000}
+        onClose={() => setSuccessMessage('')}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Alert onClose={() => setSuccessMessage('')} severity="success" sx={{ width: '100%' }}>
+          {successMessage}
+        </Alert>
+      </Snackbar>
     </Box>
   )
 }

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { looksAPI } from '../services/api'
+import { useAuth } from '../context/AuthContext'
 import {
   Box,
   Typography,
@@ -21,7 +22,10 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Stack
+  Stack,
+  Alert,
+  CircularProgress,
+  Snackbar
 } from '@mui/material'
 import {
   Favorite,
@@ -32,14 +36,23 @@ import {
   MoreVert,
   Search,
   Add,
-  AutoAwesome
+  AutoAwesome,
+  Refresh,
+  Delete
 } from '@mui/icons-material'
 
 const Explore = () => {
+  const { user } = useAuth()
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [openAILookDialog, setOpenAILookDialog] = useState(false)
   const [openUploadDialog, setOpenUploadDialog] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
+  const [successMessage, setSuccessMessage] = useState('')
+  const [likedLooks, setLikedLooks] = useState(new Set())
+  const [savedLooks, setSavedLooks] = useState(new Set())
+  
   const [uploadForm, setUploadForm] = useState({
     title: '',
     aesthetic: '',
@@ -55,18 +68,38 @@ const Explore = () => {
     aesthetic: ''
   })
   const [runwayLooks, setRunwayLooks] = useState([])
-  const [loading, setLoading] = useState(false)
 
   // Load runway looks from backend
   const loadRunwayLooks = async () => {
     try {
       setLoading(true)
+      setError(null)
       const response = await looksAPI.getAllLooks()
-      if (response.data && response.data.myLooks) {
-        setRunwayLooks(response.data.myLooks)
+      if (response.data && response.data.looks) {
+        const transformedLooks = response.data.looks.map(look => ({
+          id: look._id,
+          title: look.title,
+          description: look.description,
+          image: look.image || look.imagePath ? `http://localhost:8000/uploads/${look.imagePath.split('/').pop()}` : 'https://via.placeholder.com/400x500/ff9ff3/ffffff?text=Look',
+          style: look.style,
+          occasion: look.occasion,
+          aesthetic: look.aesthetic || [],
+          tags: look.tags || [],
+          notes: look.notes,
+          sourceType: look.sourceType || 'Uploaded',
+          isLiked: likedLooks.has(look._id),
+          isSaved: savedLooks.has(look._id),
+          createdAt: look.createdAt,
+          updatedAt: look.updatedAt
+        }))
+        setRunwayLooks(transformedLooks)
+      } else {
+        setRunwayLooks([])
       }
     } catch (error) {
       console.error('Error loading runway looks:', error)
+      setError('Failed to load runway looks. Please try again.')
+      setRunwayLooks([])
     } finally {
       setLoading(false)
     }
@@ -88,24 +121,157 @@ const Explore = () => {
 
   const filteredLooks = runwayLooks.filter(look => {
     const matchesSearch = look.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         look.designer.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         look.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         look.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          look.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
     
     const matchesCategory = selectedCategory === 'all' || 
                            look.tags.some(tag => tag.toLowerCase().includes(selectedCategory)) ||
-                           look.season.toLowerCase().includes(selectedCategory)
+                           look.style?.toLowerCase().includes(selectedCategory)
     
     return matchesSearch && matchesCategory
   })
+
+  const handleUploadLook = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      
+      const response = await looksAPI.createLook(uploadForm)
+      
+      if (response.data) {
+        setSuccessMessage('Look uploaded successfully!')
+        setOpenUploadDialog(false)
+        setUploadForm({title: '', aesthetic: '', tags: '', notes: '', image: null})
+        loadRunwayLooks() // Refresh the list
+      }
+    } catch (error) {
+      console.error('Error uploading look:', error)
+      const errorMessage = error.response?.data?.message || 
+                         error.message || 
+                         'Failed to upload look. Please try again.'
+      setError(errorMessage)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleGenerateAILook = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      
+      const lookData = {
+        title: `AI ${aiLookParams.style} Look`,
+        description: `AI-generated ${aiLookParams.style} look for ${aiLookParams.occasion}`,
+        style: aiLookParams.style,
+        occasion: aiLookParams.occasion,
+        aesthetic: [aiLookParams.aesthetic].filter(Boolean),
+        tags: [aiLookParams.style, aiLookParams.occasion, aiLookParams.season, aiLookParams.colors].filter(Boolean),
+        notes: `AI-generated look with ${aiLookParams.aesthetic} aesthetic`,
+        sourceType: 'AI'
+      }
+      
+      const response = await looksAPI.createLook(lookData)
+      
+      if (response.data) {
+        setSuccessMessage('AI Look generated successfully!')
+        setOpenAILookDialog(false)
+        setAILookParams({style: '', occasion: '', season: '', colors: '', aesthetic: ''})
+        loadRunwayLooks() // Refresh the list
+      }
+    } catch (error) {
+      console.error('Error generating AI look:', error)
+      setError('Failed to generate AI look. Please try again.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleLikeLook = (lookId) => {
+    setLikedLooks(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(lookId)) {
+        newSet.delete(lookId)
+      } else {
+        newSet.add(lookId)
+      }
+      return newSet
+    })
+    
+    // Update the look in the list
+    setRunwayLooks(prev => prev.map(look => 
+      look.id === lookId 
+        ? { ...look, isLiked: !look.isLiked }
+        : look
+    ))
+  }
+
+  const handleSaveLook = (lookId) => {
+    setSavedLooks(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(lookId)) {
+        newSet.delete(lookId)
+      } else {
+        newSet.add(lookId)
+      }
+      return newSet
+    })
+    
+    // Update the look in the list
+    setRunwayLooks(prev => prev.map(look => 
+      look.id === lookId 
+        ? { ...look, isSaved: !look.isSaved }
+        : look
+    ))
+  }
+
+  const handleShareLook = (look) => {
+    if (navigator.share) {
+      navigator.share({
+        title: look.title,
+        text: look.description,
+        url: window.location.href
+      })
+    } else {
+      // Fallback: copy to clipboard
+      navigator.clipboard.writeText(`${look.title}: ${look.description}`)
+      setSuccessMessage('Look link copied to clipboard!')
+    }
+  }
+
+  const handleDeleteLook = async (lookId) => {
+    if (window.confirm('Are you sure you want to delete this look?')) {
+      try {
+        setLoading(true)
+        await looksAPI.deleteLook(lookId)
+        setSuccessMessage('Look deleted successfully!')
+        loadRunwayLooks() // Refresh the list
+      } catch (error) {
+        console.error('Error deleting look:', error)
+        setError('Failed to delete look. Please try again.')
+      } finally {
+        setLoading(false)
+      }
+    }
+  }
 
   return (
     <Box>
       {/* Header */}
       <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" gutterBottom>
-          Explore Runway Looks
-        </Typography>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+          <Typography variant="h4" gutterBottom>
+            Explore Runway Looks
+          </Typography>
+          <Button
+            startIcon={<Refresh />}
+            onClick={loadRunwayLooks}
+            disabled={loading}
+            variant="outlined"
+          >
+            Refresh
+          </Button>
+        </Box>
         <Typography variant="body1" color="textSecondary" sx={{ mb: 3 }}>
           Discover the latest fashion trends from top designers and fashion houses around the world.
         </Typography>
@@ -129,6 +295,7 @@ const Explore = () => {
             variant="contained"
             startIcon={<AutoAwesome />}
             onClick={() => setOpenAILookDialog(true)}
+            disabled={loading}
           >
             Generate AI Look
           </Button>
@@ -149,17 +316,44 @@ const Explore = () => {
         </Box>
       </Box>
 
-      {/* Masonry Grid */}
-      {filteredLooks.length === 0 ? (
+      {/* Error Alert */}
+      {error && (
+        <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError(null)}>
+          {error}
+        </Alert>
+      )}
+
+      {/* Loading State */}
+      {loading && runwayLooks.length === 0 && (
+        <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+          <CircularProgress />
+        </Box>
+      )}
+
+      {/* Empty State */}
+      {!loading && filteredLooks.length === 0 && (
         <Box sx={{ textAlign: 'center', py: 8 }}>
           <Typography variant="h6" color="text.secondary" gutterBottom>
-            No runway looks yet
+            {searchTerm || selectedCategory !== 'all' ? 'No looks found' : 'No runway looks yet'}
           </Typography>
-          <Typography variant="body1" color="text.secondary">
-            Upload your first runway look using the + button below
+          <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+            {searchTerm || selectedCategory !== 'all' 
+              ? 'Try adjusting your search or filters'
+              : 'Upload your first runway look using the + button below'
+            }
           </Typography>
+          <Button
+            variant="contained"
+            startIcon={<Add />}
+            onClick={() => setOpenUploadDialog(true)}
+          >
+            Upload Look
+          </Button>
         </Box>
-      ) : (
+      )}
+
+      {/* Masonry Grid */}
+      {filteredLooks.length > 0 && (
         <Box sx={{ columnCount: { xs: 1, sm: 2, md: 3, lg: 4 }, columnGap: 2 }}>
           {filteredLooks.map((look) => (
           <Box
@@ -184,7 +378,7 @@ const Explore = () => {
               <Box sx={{ position: 'relative' }}>
                 <CardMedia
                   component="img"
-                  image={look.imagePath ? `http://localhost:8000/uploads/${look.imagePath.split('/').pop()}` : look.image}
+                  image={look.image}
                   alt={look.title}
                   sx={{ height: 'auto', width: '100%' }}
                 />
@@ -205,20 +399,32 @@ const Explore = () => {
                   <IconButton
                     size="small"
                     sx={{ bgcolor: 'rgba(255,255,255,0.9)', '&:hover': { bgcolor: 'rgba(255,255,255,0.95)' } }}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleSaveLook(look.id)
+                    }}
                   >
                     {look.isSaved ? <Bookmark color="primary" /> : <BookmarkBorder />}
                   </IconButton>
                   <IconButton
                     size="small"
                     sx={{ bgcolor: 'rgba(255,255,255,0.9)', '&:hover': { bgcolor: 'rgba(255,255,255,0.95)' } }}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleShareLook(look)
+                    }}
                   >
                     <Share />
                   </IconButton>
                   <IconButton
                     size="small"
                     sx={{ bgcolor: 'rgba(255,255,255,0.9)', '&:hover': { bgcolor: 'rgba(255,255,255,0.95)' } }}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleDeleteLook(look.id)
+                    }}
                   >
-                    <MoreVert />
+                    <Delete />
                   </IconButton>
                 </Box>
 
@@ -232,6 +438,10 @@ const Explore = () => {
                     bgcolor: 'rgba(255,255,255,0.9)',
                     '&:hover': { bgcolor: 'rgba(255,255,255,0.95)' }
                   }}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleLikeLook(look.id)
+                  }}
                 >
                   {look.isLiked ? <Favorite color="error" /> : <FavoriteBorder />}
                 </IconButton>
@@ -242,10 +452,10 @@ const Explore = () => {
                   {look.title}
                 </Typography>
                 <Typography variant="body2" color="primary" sx={{ mb: 1, fontWeight: 500 }}>
-                  {look.sourceType || 'Uploaded'}
+                  {look.sourceType}
                 </Typography>
                 <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
-                  {look.notes || 'No description available'}
+                  {look.description || look.notes || 'No description available'}
                 </Typography>
 
                 {/* Aesthetic Info */}
@@ -261,7 +471,7 @@ const Explore = () => {
                 {/* Stats */}
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
                   <Typography variant="body2" color="textSecondary">
-                    Uploaded {new Date(look.createdAt).toLocaleDateString()}
+                    {look.createdAt ? `Uploaded ${new Date(look.createdAt).toLocaleDateString()}` : 'Recently uploaded'}
                   </Typography>
                 </Box>
 
@@ -288,7 +498,7 @@ const Explore = () => {
         <DialogTitle>Generate AI Look</DialogTitle>
         <DialogContent>
           <Typography variant="body2" color="textSecondary" sx={{ mb: 3 }}>
-            Let AI create a personalized look based on your preferences. The AI will generate outfit combinations that match your specified style, occasion, and aesthetic.
+            Let AI create a personalized look based on your preferences. The AI will generate a completely AI-generated look that match your specified style, occasion, and aesthetic.
           </Typography>
           
           <Stack spacing={3}>
@@ -381,19 +591,14 @@ const Explore = () => {
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpenAILookDialog(false)}>Cancel</Button>
+          <Button onClick={() => setOpenAILookDialog(false)} disabled={loading}>Cancel</Button>
           <Button 
-            onClick={() => {
-              // TODO: Call AI service to generate look
-              console.log('AI Look Params:', aiLookParams)
-              setOpenAILookDialog(false)
-              setAILookParams({style: '', occasion: '', season: '', colors: '', aesthetic: ''})
-            }} 
+            onClick={handleGenerateAILook}
             variant="contained"
             color="secondary"
-            disabled={!aiLookParams.style || !aiLookParams.occasion || !aiLookParams.season}
+            disabled={!aiLookParams.style || !aiLookParams.occasion || !aiLookParams.season || loading}
           >
-            Generate AI Look
+            {loading ? 'Generating...' : 'Generate AI Look'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -458,29 +663,14 @@ const Explore = () => {
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpenUploadDialog(false)}>Cancel</Button>
+          <Button onClick={() => setOpenUploadDialog(false)} disabled={loading}>Cancel</Button>
           <Button 
-            onClick={async () => {
-              try {
-                await looksAPI.createLook(uploadForm)
-                setOpenUploadDialog(false)
-                setUploadForm({title: '', aesthetic: '', tags: '', notes: '', image: null})
-                // Refresh looks list after successful upload
-                await loadRunwayLooks()
-              } catch (error) {
-                console.error('Error uploading look:', error)
-                // Show user-friendly error message
-                const errorMessage = error.response?.data?.message || 
-                                   error.message || 
-                                   'Failed to upload look. Please try again.'
-                alert(errorMessage)
-              }
-            }} 
+            onClick={handleUploadLook}
             variant="contained"
             color="secondary"
-            disabled={!uploadForm.title || !uploadForm.image}
+            disabled={!uploadForm.title || !uploadForm.image || loading}
           >
-            Upload Look
+            {loading ? 'Uploading...' : 'Upload Look'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -503,6 +693,18 @@ const Explore = () => {
           <AutoAwesome />
         </Fab>
       </Box>
+
+      {/* Success Snackbar */}
+      <Snackbar
+        open={!!successMessage}
+        autoHideDuration={6000}
+        onClose={() => setSuccessMessage('')}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Alert onClose={() => setSuccessMessage('')} severity="success" sx={{ width: '100%' }}>
+          {successMessage}
+        </Alert>
+      </Snackbar>
     </Box>
   )
 }
