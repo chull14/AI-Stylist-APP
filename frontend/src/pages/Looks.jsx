@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { looksAPI } from '../services/api'
+import { looksAPI, galleryAPI } from '../services/api'
 import { useAuth } from '../context/AuthContext'
 import {
   Box,
@@ -32,9 +32,7 @@ import {
   Favorite, 
   FavoriteBorder,
   Share,
-  Delete,
-  Add,
-  Save
+  Delete
 } from '@mui/icons-material'
 
 const Looks = () => {
@@ -46,20 +44,21 @@ const Looks = () => {
   const [error, setError] = useState(null)
   const [successMessage, setSuccessMessage] = useState('')
   const [likedLooks, setLikedLooks] = useState(new Set())
-  const [openCreateDialog, setOpenCreateDialog] = useState(false)
   const [openGenerateDialog, setOpenGenerateDialog] = useState(false)
-  const [newLook, setNewLook] = useState({
-    title: '',
-    description: '',
-    style: '',
-    occasion: '',
-    items: []
-  })
+  const [openAICreateDialog, setOpenAICreateDialog] = useState(false)
   const [generateParams, setGenerateParams] = useState({
     style: '',
     occasion: '',
     season: '',
     colorPreference: ''
+  })
+  const [aiGalleryParams, setAIGalleryParams] = useState({
+    aesthetic: '',
+    colors: '',
+    season: '',
+    style: '',
+    occasion: '',
+    title: ''
   })
 
   const styles = ['Casual', 'Professional', 'Elegant', 'Bohemian', 'Minimalist', 'Streetwear', 'Vintage', 'Sporty']
@@ -79,7 +78,7 @@ const Looks = () => {
           id: look._id,
           title: look.title,
           description: look.description,
-          image: look.image || 'https://via.placeholder.com/400x500/ff9ff3/ffffff?text=Look',
+          image: look.image || look.imagePath ? `http://localhost:8000/uploads/${look.imagePath || look.image}` : 'https://via.placeholder.com/400x500/ff9ff3/ffffff?text=Look',
           style: look.style,
           occasion: look.occasion,
           items: look.items || [],
@@ -145,34 +144,7 @@ const Looks = () => {
     return matchesStyle && matchesOccasion
   })
 
-  const handleCreateLook = async () => {
-    try {
-      setLoading(true)
-      setError(null)
-      
-      const lookData = {
-        title: newLook.title,
-        description: newLook.description,
-        style: newLook.style,
-        occasion: newLook.occasion,
-        items: newLook.items
-      }
-      
-      const response = await looksAPI.createLook(lookData)
-      
-      if (response.data) {
-        setSuccessMessage('Look created successfully!')
-        setOpenCreateDialog(false)
-        setNewLook({title: '', description: '', style: '', occasion: '', items: []})
-        loadLooks() // Refresh the list
-      }
-    } catch (error) {
-      console.error('Error creating look:', error)
-      setError('Failed to create look. Please try again.')
-    } finally {
-      setLoading(false)
-    }
-  }
+
 
   const handleGenerateLook = async () => {
     try {
@@ -280,7 +252,7 @@ const Looks = () => {
         {/* Filters */}
         <Paper sx={{ p: 3, mb: 3 }}>
           <Grid container spacing={2}>
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid item xs={12} sm={6} md={4}>
               <FormControl fullWidth>
                 <InputLabel>Style</InputLabel>
                 <Select
@@ -297,7 +269,7 @@ const Looks = () => {
                 </Select>
               </FormControl>
             </Grid>
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid item xs={12} sm={6} md={4}>
               <FormControl fullWidth>
                 <InputLabel>Occasion</InputLabel>
                 <Select
@@ -314,7 +286,7 @@ const Looks = () => {
                 </Select>
               </FormControl>
             </Grid>
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid item xs={12} sm={6} md={2}>
               <Button
                 variant="contained"
                 startIcon={<AutoAwesome />}
@@ -324,14 +296,15 @@ const Looks = () => {
                 Generate New Look
               </Button>
             </Grid>
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid item xs={12} sm={6} md={2}>
               <Button
-                variant="outlined"
-                startIcon={<Add />}
+                variant="contained"
+                color="secondary"
+                startIcon={<AutoAwesome />}
                 fullWidth
-                onClick={() => setOpenCreateDialog(true)}
+                onClick={() => setOpenAICreateDialog(true)}
               >
-                Create Look
+                AI Create Gallery
               </Button>
             </Grid>
           </Grid>
@@ -361,15 +334,15 @@ const Looks = () => {
           <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
             {selectedStyle || selectedOccasion 
               ? 'Try adjusting your filters'
-              : 'Create your first look to get started!'
+              : 'Generate your first AI look to get started!'
             }
           </Typography>
           <Button
             variant="contained"
-            startIcon={<Add />}
-            onClick={() => setOpenCreateDialog(true)}
+            startIcon={<AutoAwesome />}
+            onClick={() => setOpenGenerateDialog(true)}
           >
-            Create Look
+            Generate AI Look
           </Button>
         </Box>
       )}
@@ -462,69 +435,7 @@ const Looks = () => {
         ))}
       </Grid>
 
-      {/* Create Look Dialog */}
-      <Dialog open={openCreateDialog} onClose={() => setOpenCreateDialog(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Create New Look</DialogTitle>
-        <DialogContent>
-          <Stack spacing={2} sx={{ mt: 1 }}>
-            <TextField
-              label="Look Title"
-              fullWidth
-              value={newLook.title}
-              onChange={(e) => setNewLook({...newLook, title: e.target.value})}
-            />
-            <TextField
-              label="Description"
-              fullWidth
-              multiline
-              rows={3}
-              value={newLook.description}
-              onChange={(e) => setNewLook({...newLook, description: e.target.value})}
-            />
-            <FormControl fullWidth>
-              <InputLabel>Style</InputLabel>
-              <Select
-                value={newLook.style}
-                label="Style"
-                onChange={(e) => setNewLook({...newLook, style: e.target.value})}
-              >
-                {styles.map((style) => (
-                  <MenuItem key={style} value={style}>{style}</MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            <FormControl fullWidth>
-              <InputLabel>Occasion</InputLabel>
-              <Select
-                value={newLook.occasion}
-                label="Occasion"
-                onChange={(e) => setNewLook({...newLook, occasion: e.target.value})}
-              >
-                {occasions.map((occasion) => (
-                  <MenuItem key={occasion} value={occasion}>{occasion}</MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            <TextField
-              label="Items (comma separated)"
-              fullWidth
-              placeholder="Denim Jacket, White T-Shirt, Black Jeans"
-              value={newLook.items.join(', ')}
-              onChange={(e) => setNewLook({...newLook, items: e.target.value.split(',').map(item => item.trim()).filter(Boolean)})}
-            />
-          </Stack>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenCreateDialog(false)}>Cancel</Button>
-          <Button 
-            onClick={handleCreateLook}
-            variant="contained"
-            disabled={!newLook.title || !newLook.description || !newLook.style || !newLook.occasion || loading}
-          >
-            {loading ? 'Creating...' : 'Create Look'}
-          </Button>
-        </DialogActions>
-      </Dialog>
+
 
       {/* Generate Look Dialog */}
       <Dialog open={openGenerateDialog} onClose={() => setOpenGenerateDialog(false)} maxWidth="md" fullWidth>
@@ -593,6 +504,150 @@ const Looks = () => {
             disabled={!generateParams.style || !generateParams.occasion || loading}
           >
             {loading ? 'Generating...' : 'Generate Look'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* AI Create Gallery Dialog */}
+      <Dialog open={openAICreateDialog} onClose={() => setOpenAICreateDialog(false)} maxWidth="md" fullWidth>
+        <DialogTitle>AI Create Gallery</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="textSecondary" sx={{ mb: 3 }}>
+            Let AI create a personalized gallery based on your preferences. The AI will curate looks that match your specified aesthetic, colors, season, and style.
+          </Typography>
+          
+          <Stack spacing={3}>
+            <FormControl fullWidth>
+              <InputLabel>Aesthetic</InputLabel>
+              <Select
+                value={aiGalleryParams.aesthetic}
+                label="Aesthetic"
+                onChange={(e) => setAIGalleryParams({...aiGalleryParams, aesthetic: e.target.value})}
+              >
+                <MenuItem value="minimalist">Minimalist</MenuItem>
+                <MenuItem value="bohemian">Bohemian</MenuItem>
+                <MenuItem value="vintage">Vintage</MenuItem>
+                <MenuItem value="streetwear">Streetwear</MenuItem>
+                <MenuItem value="elegant">Elegant</MenuItem>
+                <MenuItem value="edgy">Edgy</MenuItem>
+                <MenuItem value="romantic">Romantic</MenuItem>
+                <MenuItem value="sporty">Sporty</MenuItem>
+              </Select>
+            </FormControl>
+
+            <FormControl fullWidth>
+              <InputLabel>Color Palette</InputLabel>
+              <Select
+                value={aiGalleryParams.colors}
+                label="Color Palette"
+                onChange={(e) => setAIGalleryParams({...aiGalleryParams, colors: e.target.value})}
+              >
+                <MenuItem value="neutral">Neutral (Beige, White, Black)</MenuItem>
+                <MenuItem value="warm">Warm (Red, Orange, Yellow)</MenuItem>
+                <MenuItem value="cool">Cool (Blue, Purple, Green)</MenuItem>
+                <MenuItem value="pastel">Pastel</MenuItem>
+                <MenuItem value="bold">Bold & Bright</MenuItem>
+                <MenuItem value="monochrome">Monochrome</MenuItem>
+                <MenuItem value="earth">Earth Tones</MenuItem>
+                <MenuItem value="jewel">Jewel Tones</MenuItem>
+              </Select>
+            </FormControl>
+
+            <FormControl fullWidth>
+              <InputLabel>Season</InputLabel>
+              <Select
+                value={aiGalleryParams.season}
+                label="Season"
+                onChange={(e) => setAIGalleryParams({...aiGalleryParams, season: e.target.value})}
+              >
+                <MenuItem value="spring">Spring</MenuItem>
+                <MenuItem value="summer">Summer</MenuItem>
+                <MenuItem value="fall">Fall</MenuItem>
+                <MenuItem value="winter">Winter</MenuItem>
+                <MenuItem value="all-season">All Season</MenuItem>
+              </Select>
+            </FormControl>
+
+            <FormControl fullWidth>
+              <InputLabel>Style</InputLabel>
+              <Select
+                value={aiGalleryParams.style}
+                label="Style"
+                onChange={(e) => setAIGalleryParams({...aiGalleryParams, style: e.target.value})}
+              >
+                <MenuItem value="casual">Casual</MenuItem>
+                <MenuItem value="business">Business</MenuItem>
+                <MenuItem value="formal">Formal</MenuItem>
+                <MenuItem value="street">Street Style</MenuItem>
+                <MenuItem value="athleisure">Athleisure</MenuItem>
+                <MenuItem value="luxury">Luxury</MenuItem>
+                <MenuItem value="avant-garde">Avant-garde</MenuItem>
+                <MenuItem value="classic">Classic</MenuItem>
+              </Select>
+            </FormControl>
+
+            <FormControl fullWidth>
+              <InputLabel>Occasion</InputLabel>
+              <Select
+                value={aiGalleryParams.occasion}
+                label="Occasion"
+                onChange={(e) => setAIGalleryParams({...aiGalleryParams, occasion: e.target.value})}
+              >
+                <MenuItem value="everyday">Everyday</MenuItem>
+                <MenuItem value="work">Work</MenuItem>
+                <MenuItem value="date-night">Date Night</MenuItem>
+                <MenuItem value="party">Party</MenuItem>
+                <MenuItem value="travel">Travel</MenuItem>
+                <MenuItem value="special-event">Special Event</MenuItem>
+                <MenuItem value="weekend">Weekend</MenuItem>
+                <MenuItem value="vacation">Vacation</MenuItem>
+              </Select>
+            </FormControl>
+
+            <TextField
+              margin="dense"
+              label="Gallery Title (Optional)"
+              fullWidth
+              variant="outlined"
+              placeholder="AI will suggest a title based on your preferences"
+              value={aiGalleryParams.title || ''}
+              onChange={(e) => setAIGalleryParams({...aiGalleryParams, title: e.target.value})}
+            />
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenAICreateDialog(false)} disabled={loading}>Cancel</Button>
+          <Button 
+            onClick={async () => {
+              try {
+                setLoading(true)
+                setError(null)
+                
+                const galleryData = {
+                  title: aiGalleryParams.title || `AI ${aiGalleryParams.aesthetic} Gallery`,
+                  description: `AI-generated gallery with ${aiGalleryParams.aesthetic} aesthetic, ${aiGalleryParams.colors} colors, ${aiGalleryParams.season} season`,
+                  tags: [aiGalleryParams.aesthetic, aiGalleryParams.colors, aiGalleryParams.season, aiGalleryParams.style, aiGalleryParams.occasion].filter(Boolean)
+                }
+                
+                const response = await galleryAPI.createGallery(galleryData)
+                
+                if (response.data) {
+                  setSuccessMessage('AI Gallery created successfully!')
+                  setOpenAICreateDialog(false)
+                  setAIGalleryParams({aesthetic: '', colors: '', season: '', style: '', occasion: '', title: ''})
+                }
+              } catch (error) {
+                console.error('Error creating AI gallery:', error)
+                setError('Failed to create AI gallery. Please try again.')
+              } finally {
+                setLoading(false)
+              }
+            }} 
+            variant="contained"
+            color="secondary"
+            disabled={!aiGalleryParams.aesthetic || !aiGalleryParams.colors || !aiGalleryParams.season || loading}
+          >
+            {loading ? 'Generating...' : 'Generate AI Gallery'}
           </Button>
         </DialogActions>
       </Dialog>

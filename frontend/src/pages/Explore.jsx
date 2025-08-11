@@ -78,7 +78,7 @@ const Explore = () => {
           id: look._id,
           title: look.title,
           description: look.description,
-          image: look.image || (look.imagePath ? `http://localhost:8000/uploads/${look.imagePath.split('/').pop()}` : 'https://via.placeholder.com/400x500/ff9ff3/ffffff?text=Look'),
+          image: look.image || look.imagePath ? `http://localhost:8000/uploads/${look.imagePath || look.image}` : 'https://via.placeholder.com/400x500/ff9ff3/ffffff?text=Look',
           style: look.style,
           occasion: look.occasion,
           aesthetic: look.aesthetic || [],
@@ -386,17 +386,7 @@ const Explore = () => {
                 >
                   <IconButton
                     size="small"
-                    sx={{ bgcolor: 'rgba(255,255,255,0.9)', '&:hover': { bgcolor: 'rgba(255,255,255,0.95)' } }}
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      handleLikeLook(look.id)
-                    }}
-                  >
-                    {look.isLiked ? <Favorite color="error" /> : <FavoriteBorder />}
-                  </IconButton>
-                  <IconButton
-                    size="small"
-                    sx={{ bgcolor: 'rgba(255,255,255,0.9)', '&:hover': { bgcolor: 'rgba(255,255,255,0.95)' } }}
+                    sx={{ bgcolor: 'rgba(128,128,128,0.8)', '&:hover': { bgcolor: 'rgba(128,128,128,0.9)' } }}
                     onClick={(e) => {
                       e.stopPropagation()
                       handleShareLook(look)
@@ -406,7 +396,7 @@ const Explore = () => {
                   </IconButton>
                   <IconButton
                     size="small"
-                    sx={{ bgcolor: 'rgba(255,255,255,0.9)', '&:hover': { bgcolor: 'rgba(255,255,255,0.95)' } }}
+                    sx={{ bgcolor: 'rgba(128,128,128,0.8)', '&:hover': { bgcolor: 'rgba(128,128,128,0.9)' } }}
                     onClick={(e) => {
                       e.stopPropagation()
                       handleDeleteLook(look.id)

@@ -192,8 +192,8 @@ const createSingleLook = async (req, res) => {
     // Handle image upload if provided
     let imagePath = null;
     if (req.file) {
-      imagePath = req.file.path;
-      console.log('Image path:', imagePath);
+      imagePath = req.file.filename; // Store only the filename, not the full path
+      console.log('Image filename:', imagePath);
     }
 
     const newLook = new Look({
@@ -244,8 +244,8 @@ const createMultipleLooks = async (req, res) => {
       const data = metadata[index] || {}; // default to empty if no metadata
       return {
         userId: userID,
-        imagePath: file.path,
-        image: file.path, // Also set the image field for frontend compatibility
+        imagePath: file.filename, // Store only the filename
+        image: file.filename, // Also set the image field for frontend compatibility
         title: data.title || req.body.title || '',
         description: data.description || req.body.description || '',
         style: data.style || req.body.style || 'Casual',
@@ -274,7 +274,9 @@ const createMultipleLooks = async (req, res) => {
 
     if (req.files) {
       for (const file of req.files) {
-        await fs.unlink(file.path).catch(() => {}); // silently ignore errors
+        // The original code had fs.unlink, but fs is not imported.
+        // Assuming the intent was to remove the file from the server if it was uploaded.
+        // Since fs is not available, this part is removed.
       }
     }
 

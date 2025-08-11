@@ -38,7 +38,6 @@ import {
   Delete,
   Edit,
   Add,
-  AutoAwesome,
   Refresh
 } from '@mui/icons-material'
 
@@ -46,7 +45,6 @@ const Saved = () => {
   const { user } = useAuth()
   const [activeTab, setActiveTab] = useState(0)
   const [openCreateDialog, setOpenCreateDialog] = useState(false)
-  const [openAICreateDialog, setOpenAICreateDialog] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [successMessage, setSuccessMessage] = useState('')
@@ -58,13 +56,6 @@ const Saved = () => {
     description: '',
     coverImage: '',
     tags: []
-  })
-  const [aiGalleryParams, setAIGalleryParams] = useState({
-    aesthetic: '',
-    colors: '',
-    season: '',
-    style: '',
-    occasion: ''
   })
 
   const handleTabChange = (event, newValue) => {
@@ -86,7 +77,7 @@ const Saved = () => {
           id: look._id,
           title: look.title,
           description: look.description,
-          image: look.image || (look.imagePath ? `http://localhost:8000/uploads/${look.imagePath.split('/').pop()}` : 'https://via.placeholder.com/400x500/ff9ff3/ffffff?text=Look'),
+          image: look.image || look.imagePath ? `http://localhost:8000/uploads/${look.imagePath || look.image}` : 'https://via.placeholder.com/400x500/ff9ff3/ffffff?text=Look',
           style: look.style,
           occasion: look.occasion,
           aesthetic: look.aesthetic || [],
@@ -269,14 +260,6 @@ const Saved = () => {
               onClick={() => setOpenCreateDialog(true)}
             >
               Create Gallery
-            </Button>
-            <Button
-              variant="contained"
-              color="secondary"
-              startIcon={<AutoAwesome />}
-              onClick={() => setOpenAICreateDialog(true)}
-            >
-              AI Create Gallery
             </Button>
           </Box>
         )}
@@ -622,150 +605,7 @@ const Saved = () => {
         </DialogActions>
       </Dialog>
 
-      {/* AI Create Gallery Dialog */}
-      <Dialog open={openAICreateDialog} onClose={() => setOpenAICreateDialog(false)} maxWidth="md" fullWidth>
-        <DialogTitle>AI Create Gallery</DialogTitle>
-        <DialogContent>
-          <Typography variant="body2" color="textSecondary" sx={{ mb: 3 }}>
-            Let AI create a personalized gallery based on your preferences. The AI will curate looks that match your specified aesthetic, colors, season, and style.
-          </Typography>
-          
-          <Stack spacing={3}>
-            <FormControl fullWidth>
-              <InputLabel>Aesthetic</InputLabel>
-              <Select
-                value={aiGalleryParams.aesthetic}
-                label="Aesthetic"
-                onChange={(e) => setAIGalleryParams({...aiGalleryParams, aesthetic: e.target.value})}
-              >
-                <MenuItem value="minimalist">Minimalist</MenuItem>
-                <MenuItem value="bohemian">Bohemian</MenuItem>
-                <MenuItem value="vintage">Vintage</MenuItem>
-                <MenuItem value="streetwear">Streetwear</MenuItem>
-                <MenuItem value="elegant">Elegant</MenuItem>
-                <MenuItem value="edgy">Edgy</MenuItem>
-                <MenuItem value="romantic">Romantic</MenuItem>
-                <MenuItem value="sporty">Sporty</MenuItem>
-              </Select>
-            </FormControl>
 
-            <FormControl fullWidth>
-              <InputLabel>Color Palette</InputLabel>
-              <Select
-                value={aiGalleryParams.colors}
-                label="Color Palette"
-                onChange={(e) => setAIGalleryParams({...aiGalleryParams, colors: e.target.value})}
-              >
-                <MenuItem value="neutral">Neutral (Beige, White, Black)</MenuItem>
-                <MenuItem value="warm">Warm (Red, Orange, Yellow)</MenuItem>
-                <MenuItem value="cool">Cool (Blue, Purple, Green)</MenuItem>
-                <MenuItem value="pastel">Pastel</MenuItem>
-                <MenuItem value="bold">Bold & Bright</MenuItem>
-                <MenuItem value="monochrome">Monochrome</MenuItem>
-                <MenuItem value="earth">Earth Tones</MenuItem>
-                <MenuItem value="jewel">Jewel Tones</MenuItem>
-              </Select>
-            </FormControl>
-
-            <FormControl fullWidth>
-              <InputLabel>Season</InputLabel>
-              <Select
-                value={aiGalleryParams.season}
-                label="Season"
-                onChange={(e) => setAIGalleryParams({...aiGalleryParams, season: e.target.value})}
-              >
-                <MenuItem value="spring">Spring</MenuItem>
-                <MenuItem value="summer">Summer</MenuItem>
-                <MenuItem value="fall">Fall</MenuItem>
-                <MenuItem value="winter">Winter</MenuItem>
-                <MenuItem value="all-season">All Season</MenuItem>
-              </Select>
-            </FormControl>
-
-            <FormControl fullWidth>
-              <InputLabel>Style</InputLabel>
-              <Select
-                value={aiGalleryParams.style}
-                label="Style"
-                onChange={(e) => setAIGalleryParams({...aiGalleryParams, style: e.target.value})}
-              >
-                <MenuItem value="casual">Casual</MenuItem>
-                <MenuItem value="business">Business</MenuItem>
-                <MenuItem value="formal">Formal</MenuItem>
-                <MenuItem value="street">Street Style</MenuItem>
-                <MenuItem value="athleisure">Athleisure</MenuItem>
-                <MenuItem value="luxury">Luxury</MenuItem>
-                <MenuItem value="avant-garde">Avant-garde</MenuItem>
-                <MenuItem value="classic">Classic</MenuItem>
-              </Select>
-            </FormControl>
-
-            <FormControl fullWidth>
-              <InputLabel>Occasion</InputLabel>
-              <Select
-                value={aiGalleryParams.occasion}
-                label="Occasion"
-                onChange={(e) => setAIGalleryParams({...aiGalleryParams, occasion: e.target.value})}
-              >
-                <MenuItem value="everyday">Everyday</MenuItem>
-                <MenuItem value="work">Work</MenuItem>
-                <MenuItem value="date-night">Date Night</MenuItem>
-                <MenuItem value="party">Party</MenuItem>
-                <MenuItem value="travel">Travel</MenuItem>
-                <MenuItem value="special-event">Special Event</MenuItem>
-                <MenuItem value="weekend">Weekend</MenuItem>
-                <MenuItem value="vacation">Vacation</MenuItem>
-              </Select>
-            </FormControl>
-
-            <TextField
-              margin="dense"
-              label="Gallery Title (Optional)"
-              fullWidth
-              variant="outlined"
-              placeholder="AI will suggest a title based on your preferences"
-              value={aiGalleryParams.title || ''}
-              onChange={(e) => setAIGalleryParams({...aiGalleryParams, title: e.target.value})}
-            />
-          </Stack>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenAICreateDialog(false)} disabled={loading}>Cancel</Button>
-          <Button 
-            onClick={async () => {
-              try {
-                setLoading(true)
-                setError(null)
-                
-                const galleryData = {
-                  title: aiGalleryParams.title || `AI ${aiGalleryParams.aesthetic} Gallery`,
-                  description: `AI-generated gallery with ${aiGalleryParams.aesthetic} aesthetic, ${aiGalleryParams.colors} colors, ${aiGalleryParams.season} season`,
-                  tags: [aiGalleryParams.aesthetic, aiGalleryParams.colors, aiGalleryParams.season, aiGalleryParams.style, aiGalleryParams.occasion].filter(Boolean)
-                }
-                
-                const response = await galleryAPI.createGallery(galleryData)
-                
-                if (response.data) {
-                  setSuccessMessage('AI Gallery created successfully!')
-                  setOpenAICreateDialog(false)
-                  setAIGalleryParams({aesthetic: '', colors: '', season: '', style: '', occasion: '', title: ''})
-                  loadSavedGalleries() // Refresh the list
-                }
-              } catch (error) {
-                console.error('Error creating AI gallery:', error)
-                setError('Failed to create AI gallery. Please try again.')
-              } finally {
-                setLoading(false)
-              }
-            }} 
-            variant="contained"
-            color="secondary"
-            disabled={!aiGalleryParams.aesthetic || !aiGalleryParams.colors || !aiGalleryParams.season || loading}
-          >
-            {loading ? 'Generating...' : 'Generate AI Gallery'}
-          </Button>
-        </DialogActions>
-      </Dialog>
 
       {/* Success Snackbar */}
       <Snackbar

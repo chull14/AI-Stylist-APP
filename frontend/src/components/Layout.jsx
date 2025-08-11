@@ -27,7 +27,7 @@ const menuItems = [
   { text: 'Explore', icon: <PhotoLibrary />, path: '/explore' },
   { text: 'Saved', icon: <Bookmark />, path: '/saved' },
   { text: 'My Closet', icon: <Checkroom />, path: '/closet' },
-  { text: 'AI Looks', icon: <Style />, path: '/looks' },
+  { text: 'Stylist', icon: <Style />, path: '/looks' },
   { text: 'Profile', icon: <Person />, path: '/profile' }
 ]
 
