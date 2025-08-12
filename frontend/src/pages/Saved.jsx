@@ -45,6 +45,8 @@ const Saved = () => {
   const { user } = useAuth()
   const [activeTab, setActiveTab] = useState(0)
   const [openCreateDialog, setOpenCreateDialog] = useState(false)
+  const [openEditDialog, setOpenEditDialog] = useState(false)
+  const [editingGallery, setEditingGallery] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [successMessage, setSuccessMessage] = useState('')
@@ -209,6 +211,61 @@ const Saved = () => {
     }
   }
 
+  const handleEditGallery = async () => {
+    if (!editingGallery) return
+    
+    try {
+      setLoading(true)
+      setError(null)
+      
+      const galleryData = {
+        title: editingGallery.title,
+        description: editingGallery.description,
+        tags: editingGallery.tags
+      }
+      
+      const response = await galleryAPI.updateGallery(editingGallery.id, galleryData)
+      
+      if (response.data) {
+        setSuccessMessage('Gallery updated successfully!')
+        setOpenEditDialog(false)
+        setEditingGallery(null)
+        loadSavedGalleries() // Refresh the list
+      }
+    } catch (error) {
+      console.error('Error updating gallery:', error)
+      setError('Failed to update gallery. Please try again.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleOpenEditDialog = (gallery) => {
+    setEditingGallery({
+      id: gallery.id,
+      title: gallery.title,
+      description: gallery.description,
+      tags: gallery.tags || []
+    })
+    setOpenEditDialog(true)
+  }
+
+  const handleDeleteGallery = async (galleryId) => {
+    if (window.confirm('Are you sure you want to delete this gallery?')) {
+      try {
+        setLoading(true)
+        await galleryAPI.deleteGallery(galleryId)
+        setSuccessMessage('Gallery deleted successfully!')
+        loadSavedGalleries() // Refresh the list
+      } catch (error) {
+        console.error('Error deleting gallery:', error)
+        setError('Failed to delete gallery. Please try again.')
+      } finally {
+        setLoading(false)
+      }
+    }
+  }
+
   return (
     <Box>
       {/* Header */}
@@ -338,7 +395,7 @@ const Saved = () => {
 
                       <IconButton
                         size="small"
-                        sx={{ bgcolor: 'rgba(255,255,255,0.9)', '&:hover': { bgcolor: 'rgba(255,255,255,0.95)' } }}
+                        sx={{ bgcolor: 'rgba(128,128,128,0.8)', '&:hover': { bgcolor: 'rgba(128,128,128,0.9)' } }}
                         onClick={(e) => {
                           e.stopPropagation()
                           handleShareLook(look)
@@ -348,7 +405,7 @@ const Saved = () => {
                       </IconButton>
                       <IconButton
                         size="small"
-                        sx={{ bgcolor: 'rgba(255,255,255,0.9)', '&:hover': { bgcolor: 'rgba(255,255,255,0.95)' } }}
+                        sx={{ bgcolor: 'rgba(128,128,128,0.8)', '&:hover': { bgcolor: 'rgba(128,128,128,0.9)' } }}
                         onClick={(e) => {
                           e.stopPropagation()
                           handleDeleteLook(look.id)
@@ -484,19 +541,21 @@ const Saved = () => {
                     >
                       <IconButton
                         size="small"
-                        sx={{ bgcolor: 'rgba(255,255,255,0.9)', '&:hover': { bgcolor: 'rgba(255,255,255,0.95)' } }}
-                      >
-                        <Bookmark color="primary" />
-                      </IconButton>
-                      <IconButton
-                        size="small"
-                        sx={{ bgcolor: 'rgba(255,255,255,0.9)', '&:hover': { bgcolor: 'rgba(255,255,255,0.95)' } }}
+                        sx={{ bgcolor: 'rgba(128,128,128,0.8)', '&:hover': { bgcolor: 'rgba(128,128,128,0.9)' } }}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleOpenEditDialog(gallery)
+                        }}
                       >
                         <Edit />
                       </IconButton>
                       <IconButton
                         size="small"
-                        sx={{ bgcolor: 'rgba(255,255,255,0.9)', '&:hover': { bgcolor: 'rgba(255,255,255,0.95)' } }}
+                        sx={{ bgcolor: 'rgba(128,128,128,0.8)', '&:hover': { bgcolor: 'rgba(128,128,128,0.9)' } }}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleDeleteGallery(gallery.id)
+                        }}
                       >
                         <Delete />
                       </IconButton>
@@ -605,7 +664,52 @@ const Saved = () => {
         </DialogActions>
       </Dialog>
 
-
+      {/* Edit Gallery Dialog */}
+      <Dialog open={openEditDialog} onClose={() => setOpenEditDialog(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Edit Gallery</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            margin="dense"
+            label="Gallery Title"
+            fullWidth
+            variant="outlined"
+            value={editingGallery?.title || ''}
+            onChange={(e) => setEditingGallery({...editingGallery, title: e.target.value})}
+            sx={{ mb: 2 }}
+          />
+          <TextField
+            margin="dense"
+            label="Description"
+            fullWidth
+            multiline
+            rows={3}
+            variant="outlined"
+            value={editingGallery?.description || ''}
+            onChange={(e) => setEditingGallery({...editingGallery, description: e.target.value})}
+            sx={{ mb: 2 }}
+          />
+          <TextField
+            margin="dense"
+            label="Tags (comma separated)"
+            fullWidth
+            variant="outlined"
+            placeholder="Summer, Casual, Street Style"
+            value={editingGallery?.tags?.join(', ') || ''}
+            onChange={(e) => setEditingGallery({...editingGallery, tags: e.target.value.split(',').map(tag => tag.trim()).filter(Boolean)})}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenEditDialog(false)}>Cancel</Button>
+          <Button 
+            onClick={handleEditGallery}
+            variant="contained"
+            disabled={!editingGallery?.title || !editingGallery?.description || loading}
+          >
+            {loading ? 'Updating...' : 'Update Gallery'}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Success Snackbar */}
       <Snackbar

@@ -41,7 +41,9 @@ import {
   Bookmark,
   BookmarkBorder,
   AutoAwesome,
-  Refresh
+  Refresh,
+  Edit,
+  Delete
 } from '@mui/icons-material'
 
 const Gallery = () => {
@@ -51,6 +53,8 @@ const Gallery = () => {
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [openCreateDialog, setOpenCreateDialog] = useState(false)
   const [openAICreateDialog, setOpenAICreateDialog] = useState(false)
+  const [openEditDialog, setOpenEditDialog] = useState(false)
+  const [editingGallery, setEditingGallery] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [successMessage, setSuccessMessage] = useState('')
@@ -120,49 +124,6 @@ const Gallery = () => {
       setLoading(false)
     }
   }
-
-  // Sample galleries for fallback
-  const getSampleGalleries = () => [
-    {
-      id: 1,
-      title: 'Summer Street Style',
-      description: 'Casual and chic summer looks for everyday inspiration',
-      coverImage: galleryImages.summerStyle,
-      imageCount: 24,
-      followers: 156,
-      author: 'StyleInspirer',
-      authorAvatar: 'https://via.placeholder.com/40x40/ff6b6b/ffffff?text=S',
-      tags: ['Summer', 'Casual', 'Street Style', 'Fashion'],
-      isSaved: false,
-      isLiked: true
-    },
-    {
-      id: 2,
-      title: 'Evening Elegance',
-      description: 'Sophisticated evening wear and formal occasions',
-      coverImage: galleryImages.eveningElegance,
-      imageCount: 18,
-      followers: 89,
-      author: 'FashionForward',
-      authorAvatar: 'https://via.placeholder.com/40x40/4ecdc4/ffffff?text=F',
-      tags: ['Evening', 'Elegant', 'Formal', 'Luxury'],
-      isSaved: true,
-      isLiked: false
-    },
-    {
-      id: 3,
-      title: 'Minimalist Chic',
-      description: 'Clean and minimal fashion for the modern woman',
-      coverImage: galleryImages.minimalistChic,
-      imageCount: 32,
-      followers: 234,
-      author: 'MinimalStyle',
-      authorAvatar: 'https://via.placeholder.com/40x40/45b7d1/ffffff?text=M',
-      tags: ['Minimalist', 'Clean', 'Modern', 'Simple'],
-      isSaved: false,
-      isLiked: true
-    }
-  ]
 
   useEffect(() => {
     loadGalleries()
@@ -301,6 +262,45 @@ const Gallery = () => {
     }
   }
 
+  const handleEditGallery = async () => {
+    if (!editingGallery) return
+    
+    try {
+      setLoading(true)
+      setError(null)
+      
+      const galleryData = {
+        title: editingGallery.title,
+        description: editingGallery.description,
+        tags: editingGallery.tags
+      }
+      
+      const response = await galleryAPI.updateGallery(editingGallery.id, galleryData)
+      
+      if (response.data) {
+        setSuccessMessage('Gallery updated successfully!')
+        setOpenEditDialog(false)
+        setEditingGallery(null)
+        loadGalleries() // Refresh the list
+      }
+    } catch (error) {
+      console.error('Error updating gallery:', error)
+      setError('Failed to update gallery. Please try again.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleOpenEditDialog = (gallery) => {
+    setEditingGallery({
+      id: gallery.id,
+      title: gallery.title,
+      description: gallery.description,
+      tags: gallery.tags || []
+    })
+    setOpenEditDialog(true)
+  }
+
   return (
     <Box>
       {/* Header */}
@@ -414,6 +414,7 @@ const Gallery = () => {
 
       {/* Masonry Grid */}
       <Box sx={{ columnCount: { xs: 1, sm: 2, md: 3, lg: 4 }, columnGap: 2 }}>
+        
         {filteredGalleries.map((gallery) => (
           <Box
             key={gallery.id}
@@ -450,14 +451,31 @@ const Gallery = () => {
                     right: 8,
                     display: 'flex',
                     gap: 1,
-                    opacity: 0,
-                    transition: 'opacity 0.2s',
-                    '&:hover': { opacity: 1 }
+                    opacity: 1,
+                    transition: 'opacity 0.2s'
                   }}
                 >
                   <IconButton
                     size="small"
-                    sx={{ bgcolor: 'rgba(255,255,255,0.9)', '&:hover': { bgcolor: 'rgba(255,255,255,0.95)' } }}
+                    sx={{ 
+                      bgcolor: 'rgba(128,128,128,0.8)', 
+                      '&:hover': { bgcolor: 'rgba(128,128,128,0.9)' },
+                      color: 'white'
+                    }}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleOpenEditDialog(gallery)
+                    }}
+                  >
+                    <Edit />
+                  </IconButton>
+                  <IconButton
+                    size="small"
+                    sx={{ 
+                      bgcolor: 'rgba(128,128,128,0.8)', 
+                      '&:hover': { bgcolor: 'rgba(128,128,128,0.9)' },
+                      color: 'white'
+                    }}
                     onClick={(e) => {
                       e.stopPropagation()
                       handleSaveGallery(gallery.id)
@@ -467,7 +485,11 @@ const Gallery = () => {
                   </IconButton>
                   <IconButton
                     size="small"
-                    sx={{ bgcolor: 'rgba(255,255,255,0.9)', '&:hover': { bgcolor: 'rgba(255,255,255,0.95)' } }}
+                    sx={{ 
+                      bgcolor: 'rgba(128,128,128,0.8)', 
+                      '&:hover': { bgcolor: 'rgba(128,128,128,0.9)' },
+                      color: 'white'
+                    }}
                     onClick={(e) => {
                       e.stopPropagation()
                       handleShareGallery(gallery)
@@ -477,13 +499,17 @@ const Gallery = () => {
                   </IconButton>
                   <IconButton
                     size="small"
-                    sx={{ bgcolor: 'rgba(255,255,255,0.9)', '&:hover': { bgcolor: 'rgba(255,255,255,0.95)' } }}
+                    sx={{ 
+                      bgcolor: 'rgba(128,128,128,0.8)', 
+                      '&:hover': { bgcolor: 'rgba(128,128,128,0.9)' },
+                      color: 'white'
+                    }}
                     onClick={(e) => {
                       e.stopPropagation()
                       handleDeleteGallery(gallery.id)
                     }}
                   >
-                    <MoreVert />
+                    <Delete />
                   </IconButton>
                 </Box>
 
@@ -590,6 +616,53 @@ const Gallery = () => {
             disabled={!newGallery.title || !newGallery.description || loading}
           >
             {loading ? 'Creating...' : 'Create Gallery'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Edit Gallery Dialog */}
+      <Dialog open={openEditDialog} onClose={() => setOpenEditDialog(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Edit Gallery</DialogTitle>
+        <DialogContent>
+          <MuiTextField
+            autoFocus
+            margin="dense"
+            label="Gallery Title"
+            fullWidth
+            variant="outlined"
+            value={editingGallery?.title || ''}
+            onChange={(e) => setEditingGallery({...editingGallery, title: e.target.value})}
+            sx={{ mb: 2 }}
+          />
+          <MuiTextField
+            margin="dense"
+            label="Description"
+            fullWidth
+            multiline
+            rows={3}
+            variant="outlined"
+            value={editingGallery?.description || ''}
+            onChange={(e) => setEditingGallery({...editingGallery, description: e.target.value})}
+            sx={{ mb: 2 }}
+          />
+          <MuiTextField
+            margin="dense"
+            label="Tags (comma separated)"
+            fullWidth
+            variant="outlined"
+            placeholder="Summer, Casual, Street Style"
+            value={editingGallery?.tags?.join(', ') || ''}
+            onChange={(e) => setEditingGallery({...editingGallery, tags: e.target.value.split(',').map(tag => tag.trim()).filter(Boolean)})}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenEditDialog(false)}>Cancel</Button>
+          <Button 
+            onClick={handleEditGallery}
+            variant="contained"
+            disabled={!editingGallery?.title || !editingGallery?.description || loading}
+          >
+            {loading ? 'Updating...' : 'Update Gallery'}
           </Button>
         </DialogActions>
       </Dialog>
