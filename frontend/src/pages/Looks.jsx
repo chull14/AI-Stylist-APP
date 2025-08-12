@@ -71,7 +71,7 @@ const Looks = () => {
     try {
       setLoading(true)
       setError(null)
-      const response = await looksAPI.getAllLooks()
+      const response = await looksAPI.getAIGeneratedLooks()
       
       if (response.data && response.data.looks) {
         const transformedLooks = response.data.looks.map(look => ({
@@ -158,7 +158,8 @@ const Looks = () => {
         occasion: generateParams.occasion,
         items: ['AI Generated Items'], // This would be populated by AI service
         season: generateParams.season,
-        colorPreference: generateParams.colorPreference
+        colorPreference: generateParams.colorPreference,
+        sourceType: 'AI' // Mark as AI-generated
       }
       
       const response = await looksAPI.createLook(lookData)

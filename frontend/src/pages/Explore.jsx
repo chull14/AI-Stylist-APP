@@ -72,7 +72,7 @@ const Explore = () => {
     try {
       setLoading(true)
       setError(null)
-      const response = await looksAPI.getAllLooks()
+      const response = await looksAPI.getUploadedLooks()
       if (response.data && response.data.looks) {
         const transformedLooks = response.data.looks.map(look => ({
           id: look._id,
@@ -134,7 +134,13 @@ const Explore = () => {
       setLoading(true)
       setError(null)
       
-      const response = await looksAPI.createLook(uploadForm)
+      // Add sourceType to the upload form
+      const uploadData = {
+        ...uploadForm,
+        sourceType: 'upload'
+      }
+      
+      const response = await looksAPI.createLook(uploadData)
       
       if (response.data) {
         setSuccessMessage('Look uploaded successfully!')

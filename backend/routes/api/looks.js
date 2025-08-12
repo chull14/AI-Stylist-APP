@@ -13,6 +13,12 @@ router.route('/')
   .get(verifyJWT, verifyUser, lookController.getAllLooks) // get all user looks
   .post(verifyJWT, verifyUser, upload.single('image'), lookController.createSingleLook); // create a single look
 
+// path - /api/users/:userId/looks/uploaded
+router.get('/uploaded', verifyJWT, verifyUser, lookController.getUploadedLooks); // get all uploaded looks
+
+// path - /api/users/:userId/looks/ai-generated
+router.get('/ai-generated', verifyJWT, verifyUser, lookController.getAiGeneratedLooks); // get all ai generated looks
+
 // IMPORTANT: These specific routes MUST come before /:lookId routes
 // path - /api/users/:userId/looks/saved
 router.get('/saved', verifyJWT, verifyUser, lookController.getSavedLooks); // get user's saved looks

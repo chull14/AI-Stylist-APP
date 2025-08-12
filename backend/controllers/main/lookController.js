@@ -58,6 +58,50 @@ const getLook = async (req, res) => {
   }
 }
 
+// Get all the looks the user has uploaded
+const getUploadedLooks = async (req, res) => {
+  const userID = req.user.id;
+  try {
+    const looks = await Look.find({ userId: userID, sourceType: 'upload' }).exec();
+
+    if (!looks || looks.length === 0) return res.status(204).json({ message: 'No uploaded looks found for this user' });
+
+    const looksWithUserStatus = looks.map(look => {
+      const lookObj = look.toObject();
+      lookObj.isLiked = look.likedBy && look.likedBy.includes(userID);
+      lookObj.isSaved = look.savedBy && look.savedBy.includes(userID);
+      return lookObj;
+    });
+
+    res.status(200).json({ looks: looksWithUserStatus });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server Error' });
+  }
+}
+
+// Get all the looks the user has generated with AI
+const getAiGeneratedLooks = async (req, res) => {
+  const userID = req.user.id;
+  try {
+    const looks = await Look.find({ userId: userID, sourceType: 'AI' }).exec();
+
+    if (!looks || looks.length === 0) return res.status(204).json({ message: 'No AI generated looks found for this user' });
+
+    const looksWithUserStatus = looks.map(look => {
+      const lookObj = look.toObject();
+      lookObj.isLiked = look.likedBy && look.likedBy.includes(userID);
+      lookObj.isSaved = look.savedBy && look.savedBy.includes(userID);
+      return lookObj;
+    });
+
+    res.status(200).json({ looks: looksWithUserStatus });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server Error' });
+  }
+}
+
 // Update a look (notes, tags, aesthetic)
 const updateLook = async (req, res) => {
   try {
@@ -325,5 +369,7 @@ export default {
   createSingleLook,
   createMultipleLooks,
   deleteLook,
-  addLookToGallery
+  addLookToGallery,
+  getUploadedLooks,
+  getAiGeneratedLooks
 }

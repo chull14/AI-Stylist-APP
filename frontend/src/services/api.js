@@ -121,6 +121,18 @@ export const looksAPI = {
     return api.get(`/api/users/${userId}/looks`)
   },
 
+  // Get uploaded looks only
+  getUploadedLooks: () => {
+    const userId = getUserId()
+    return api.get(`/api/users/${userId}/looks/uploaded`)
+  },
+
+  // Get AI-generated looks only
+  getAIGeneratedLooks: () => {
+    const userId = getUserId()
+    return api.get(`/api/users/${userId}/looks/ai-generated`)
+  },
+
   // Get user's saved looks
   getSavedLooks: () => {
     const userId = getUserId()

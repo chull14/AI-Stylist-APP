@@ -40,3 +40,6 @@
 20250722	12:47:27	c2215840-3e22-4161-b216-1e8e49e56255	TypeError: Cannot destructure property 'title' of 'req.body' as it is undefined.
 20250722	12:56:13	6a229983-fbd7-46eb-9c8c-b5b01c4ea1a3	TypeError: Cannot read properties of undefined (reading 'id')
 20250806	13:24:12	f5340f77-2ec8-4db0-ab55-df0fec05de8b	MulterError: File too large
+20250811	17:37:04	27837bcc-c126-406e-99de-bb4e0666f94a	MulterError: File too large
+20250811	17:37:12	c86bd714-0d34-4b2c-9c55-0af823575f48	MulterError: File too large
+20250811	17:38:58	22c5fde5-4aaa-4ba6-a339-412f39be5da7	MulterError: File too large
