@@ -64,8 +64,8 @@ const Layout = () => {
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <CssBaseline />
       <AppBar position="static">
-        <Toolbar>
-          <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 0, mr: 4 }}>
+        <Toolbar sx={{ position: 'relative' }}>
+          <Typography variant="h6" noWrap component="div" sx={{ position: 'absolute', left: 16, zIndex: 1 }}>
             AI Stylist
           </Typography>
           
@@ -73,16 +73,21 @@ const Layout = () => {
             value={getCurrentTabIndex()} 
             onChange={handleTabChange}
             sx={{ 
-              flexGrow: 1,
-              justifyContent: 'center',
+              width: '100%',
               '& .MuiTabs-flexContainer': {
                 justifyContent: 'center',
-                gap: 6,
+                gap: 8,
+              },
+              '& .MuiTabs-indicator': {
+                backgroundColor: '#ffffff',
               },
               '& .MuiTab-root': {
                 color: 'rgba(255, 255, 255, 0.7)',
                 minWidth: 'auto',
-                padding: '12px 24px',
+                padding: '20px 32px',
+                minHeight: '80px',
+                fontSize: '0.9rem',
+                fontWeight: 500,
                 '&.Mui-selected': {
                   color: '#ffffff',
                 },
@@ -104,6 +109,7 @@ const Layout = () => {
             aria-haspopup="true"
             onClick={handleMenuOpen}
             color="inherit"
+            sx={{ position: 'absolute', right: 16, zIndex: 1 }}
           >
             <Avatar sx={{ width: 32, height: 32 }}>
               {user?.username?.charAt(0).toUpperCase()}

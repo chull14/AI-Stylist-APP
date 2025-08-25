@@ -8,32 +8,32 @@ import App from './App.jsx'
 
 const theme = createTheme({
   palette: {
-    mode: 'dark',
+    mode: 'light',
     primary: {
-      main: '#ffffff',
-      light: '#f5f5f5',
-      dark: '#e0e0e0',
-      contrastText: '#000000',
+      main: '#000000',
+      light: '#424242',
+      dark: '#000000',
+      contrastText: '#ffffff',
     },
     secondary: {
-      main: '#424242',
-      light: '#616161',
-      dark: '#212121',
+      main: '#666666',
+      light: '#999999',
+      dark: '#333333',
       contrastText: '#ffffff',
     },
     background: {
-      default: '#0a0a0a',
-      paper: '#1a1a1a',
+      default: '#ffffff',
+      paper: '#ffffff',
     },
     text: {
-      primary: '#ffffff',
-      secondary: '#b0b0b0',
+      primary: '#000000',
+      secondary: '#666666',
     },
-    divider: '#333333',
+    divider: '#e0e0e0',
     action: {
-      active: '#ffffff',
-      hover: 'rgba(255, 255, 255, 0.08)',
-      selected: 'rgba(255, 255, 255, 0.16)',
+      active: '#000000',
+      hover: 'rgba(0, 0, 0, 0.08)',
+      selected: 'rgba(0, 0, 0, 0.16)',
     },
   },
   typography: {
@@ -84,11 +84,12 @@ const theme = createTheme({
     MuiCard: {
       styleOverrides: {
         root: {
-          backgroundColor: '#1a1a1a',
-          border: '1px solid #333333',
-          boxShadow: 'none',
+          backgroundColor: '#ffffff',
+          border: '1px solid #e0e0e0',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
           '&:hover': {
-            border: '1px solid #424242',
+            border: '1px solid #999999',
+            boxShadow: '0 4px 8px rgba(0,0,0,0.15)',
           },
         },
       },
@@ -96,7 +97,7 @@ const theme = createTheme({
     MuiCardMedia: {
       styleOverrides: {
         root: {
-          border: '1px solid #ffffff',
+          border: '1px solid #e0e0e0',
         },
       },
     },
@@ -109,24 +110,24 @@ const theme = createTheme({
           letterSpacing: '0.05em',
         },
         contained: {
-          backgroundColor: '#ffffff',
-          color: '#000000',
+          backgroundColor: '#000000',
+          color: '#ffffff',
           '&:hover': {
-            backgroundColor: '#f5f5f5',
+            backgroundColor: '#333333',
           },
         },
         outlined: {
-          borderColor: '#424242',
-          color: '#ffffff',
+          borderColor: '#666666',
+          color: '#000000',
           '&:hover': {
-            borderColor: '#616161',
-            backgroundColor: 'rgba(255, 255, 255, 0.08)',
+            borderColor: '#999999',
+            backgroundColor: 'rgba(0, 0, 0, 0.08)',
           },
         },
         text: {
-          color: '#ffffff',
+          color: '#000000',
           '&:hover': {
-            backgroundColor: 'rgba(255, 255, 255, 0.08)',
+            backgroundColor: 'rgba(0, 0, 0, 0.08)',
           },
         },
       },
@@ -138,12 +139,12 @@ const theme = createTheme({
           fontWeight: 500,
         },
         filled: {
-          backgroundColor: '#424242',
+          backgroundColor: '#666666',
           color: '#ffffff',
         },
         outlined: {
-          borderColor: '#616161',
-          color: '#b0b0b0',
+          borderColor: '#999999',
+          color: '#666666',
         },
       },
     },
@@ -153,13 +154,13 @@ const theme = createTheme({
           '& .MuiOutlinedInput-root': {
             borderRadius: 0,
             '& fieldset': {
-              borderColor: '#424242',
+              borderColor: '#e0e0e0',
             },
             '&:hover fieldset': {
-              borderColor: '#616161',
+              borderColor: '#999999',
             },
             '&.Mui-focused fieldset': {
-              borderColor: '#ffffff',
+              borderColor: '#000000',
             },
           },
         },
@@ -171,17 +172,17 @@ const theme = createTheme({
           borderRadius: 0,
         },
         primary: {
-          backgroundColor: '#ffffff',
-          color: '#000000',
+          backgroundColor: '#000000',
+          color: '#ffffff',
           '&:hover': {
-            backgroundColor: '#f5f5f5',
+            backgroundColor: '#333333',
           },
         },
         secondary: {
-          backgroundColor: '#424242',
+          backgroundColor: '#666666',
           color: '#ffffff',
           '&:hover': {
-            backgroundColor: '#616161',
+            backgroundColor: '#999999',
           },
         },
       },
@@ -189,25 +190,25 @@ const theme = createTheme({
     MuiAppBar: {
       styleOverrides: {
         root: {
-          backgroundColor: '#0a0a0a',
+          backgroundColor: '#000000',
           borderBottom: '1px solid #333333',
-          boxShadow: 'none',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
         },
       },
     },
     MuiDrawer: {
       styleOverrides: {
         paper: {
-          backgroundColor: '#1a1a1a',
-          borderRight: '1px solid #333333',
+          backgroundColor: '#ffffff',
+          borderRight: '1px solid #e0e0e0',
         },
       },
     },
     MuiDialog: {
       styleOverrides: {
         paper: {
-          backgroundColor: '#1a1a1a',
-          border: '1px solid #333333',
+          backgroundColor: '#ffffff',
+          border: '1px solid #e0e0e0',
           borderRadius: 0,
         },
       },
@@ -222,8 +223,8 @@ const theme = createTheme({
     MuiMenu: {
       styleOverrides: {
         paper: {
-          backgroundColor: '#1a1a1a',
-          border: '1px solid #333333',
+          backgroundColor: '#ffffff',
+          border: '1px solid #e0e0e0',
           borderRadius: 0,
         },
       },
@@ -239,8 +240,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <GlobalStyles
           styles={{
             body: {
-              background: 'linear-gradient(135deg, #f2ede3 0%, #f2ede3 50%, #0a0a0a 50%, #0a0a0a 100%)',
-              backgroundAttachment: 'fixed',
+              background: '#ffffff',
               minHeight: '100vh',
             },
           }}

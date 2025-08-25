@@ -34,7 +34,6 @@ import {
   BookmarkBorder,
   Share,
   MoreVert,
-  Search,
   Add,
   AutoAwesome,
   Refresh,
@@ -43,7 +42,6 @@ import {
 
 const Explore = () => {
   const { user } = useAuth()
-  const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [openAILookDialog, setOpenAILookDialog] = useState(false)
   const [openUploadDialog, setOpenUploadDialog] = useState(false)
@@ -108,56 +106,20 @@ const Explore = () => {
   }, [])
 
   const categories = [
-    { value: 'all', label: 'All Looks' },
-    { value: 'spring', label: 'Spring 2024' },
-    { value: 'fall', label: 'Fall 2024' },
-    { value: 'couture', label: 'Haute Couture' },
-    { value: 'cruise', label: 'Cruise' },
-    { value: 'paris', label: 'Paris Fashion Week' },
-    { value: 'milan', label: 'Milan Fashion Week' }
+    { value: 'all', label: 'All' },
+    { value: 'spring', label: 'Spring' },
+    { value: 'summer', label: 'Summer' },
+    { value: 'fall', label: 'Fall' },
+    { value: 'winter', label: 'Winter' }
   ]
 
   const filteredLooks = runwayLooks.filter(look => {
-    const matchesSearch = look.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         look.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         look.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
-    
     const matchesCategory = selectedCategory === 'all' || 
                            look.tags.some(tag => tag.toLowerCase().includes(selectedCategory)) ||
                            look.style?.toLowerCase().includes(selectedCategory)
     
-    return matchesSearch && matchesCategory
+    return matchesCategory
   })
-
-  const handleUploadLook = async () => {
-    try {
-      setLoading(true)
-      setError(null)
-      
-      // Add sourceType to the upload form
-      const uploadData = {
-        ...uploadForm,
-        sourceType: 'upload'
-      }
-      
-      const response = await looksAPI.createLook(uploadData)
-      
-      if (response.data) {
-        setSuccessMessage('Look uploaded successfully!')
-        setOpenUploadDialog(false)
-        setUploadForm({title: '', aesthetic: '', tags: '', notes: '', image: null})
-        loadRunwayLooks() // Refresh the list
-      }
-    } catch (error) {
-      console.error('Error uploading look:', error)
-      const errorMessage = error.response?.data?.message || 
-                         error.message || 
-                         'Failed to upload look. Please try again.'
-      setError(errorMessage)
-    } finally {
-      setLoading(false)
-    }
-  }
 
   const handleGenerateAILook = async () => {
     try {
@@ -190,6 +152,38 @@ const Explore = () => {
       setLoading(false)
     }
   }
+
+  const handleUploadLook = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      
+      // Add sourceType to the upload form
+      const uploadData = {
+        ...uploadForm,
+        sourceType: 'upload'
+      }
+      
+      const response = await looksAPI.createLook(uploadData)
+      
+      if (response.data) {
+        setSuccessMessage('Look uploaded successfully!')
+        setOpenUploadDialog(false)
+        setUploadForm({title: '', aesthetic: '', tags: '', notes: '', image: null})
+        loadRunwayLooks() // Refresh the list
+      }
+    } catch (error) {
+      console.error('Error uploading look:', error)
+      const errorMessage = error.response?.data?.message || 
+                         error.message || 
+                         'Failed to upload look. Please try again.'
+      setError(errorMessage)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+
 
   const handleLikeLook = async (lookId) => {
     try {
@@ -231,12 +225,16 @@ const Explore = () => {
     if (window.confirm('Are you sure you want to delete this look?')) {
       try {
         setLoading(true)
-        await looksAPI.deleteLook(lookId)
+        console.log('Attempting to delete look with ID:', lookId)
+        const response = await looksAPI.deleteLook(lookId)
+        console.log('Delete response:', response)
         setSuccessMessage('Look deleted successfully!')
         loadRunwayLooks() // Refresh the list
       } catch (error) {
         console.error('Error deleting look:', error)
-        setError('Failed to delete look. Please try again.')
+        console.error('Error response:', error.response)
+        const errorMessage = error.response?.data?.message || error.message || 'Failed to delete look. Please try again.'
+        setError(`Failed to delete look: ${errorMessage}`)
       } finally {
         setLoading(false)
       }
@@ -247,8 +245,8 @@ const Explore = () => {
     <Box>
       {/* Header */}
       <Box sx={{ mb: 4 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-          <Typography variant="h4" gutterBottom>
+        <Box sx={{ position: 'relative', mb: 2 }}>
+          <Typography variant="h4" gutterBottom sx={{ textAlign: 'center' }}>
             Explore Runway Looks
           </Typography>
           <Button
@@ -256,42 +254,19 @@ const Explore = () => {
             onClick={loadRunwayLooks}
             disabled={loading}
             variant="outlined"
+            sx={{ position: 'absolute', right: 0, top: 0 }}
           >
             Refresh
           </Button>
         </Box>
-        <Typography variant="body1" color="textSecondary" sx={{ mb: 3 }}>
+        <Typography variant="body1" color="textSecondary" sx={{ mb: 3, textAlign: 'center' }}>
           Discover the latest fashion trends from top designers and fashion houses around the world.
         </Typography>
 
-        {/* Search Bar */}
-        <Box sx={{ display: 'flex', gap: 2, mb: 3, flexWrap: 'wrap' }}>
-          <TextField
-            placeholder="Search looks, designers, or collections..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <Search />
-                </InputAdornment>
-              ),
-            }}
-            sx={{ minWidth: 300, flexGrow: 1 }}
-          />
-          <Button
-            variant="contained"
-            startIcon={<AutoAwesome />}
-            onClick={() => setOpenAILookDialog(true)}
-            disabled={loading}
-          >
-            Generate AI Look
-          </Button>
 
-        </Box>
 
         {/* Category Chips */}
-        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 3 }}>
+        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 3, justifyContent: 'center' }}>
           {categories.map((category) => (
             <Chip
               key={category.value}
@@ -323,11 +298,11 @@ const Explore = () => {
       {!loading && filteredLooks.length === 0 && (
         <Box sx={{ textAlign: 'center', py: 8 }}>
           <Typography variant="h6" color="text.secondary" gutterBottom>
-            {searchTerm || selectedCategory !== 'all' ? 'No looks found' : 'No runway looks yet'}
+            {selectedCategory !== 'all' ? 'No looks found' : 'No runway looks yet'}
           </Typography>
           <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-            {searchTerm || selectedCategory !== 'all' 
-              ? 'Try adjusting your search or filters'
+            {selectedCategory !== 'all' 
+              ? 'Try adjusting your filters'
               : 'Upload your first runway look using the + button below'
             }
           </Typography>
@@ -345,8 +320,8 @@ const Explore = () => {
       {filteredLooks.length > 0 && (
         <Box sx={{ 
           display: 'grid',
-          gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)', lg: 'repeat(4, 1fr)' },
-          gap: 2
+          gridTemplateColumns: { xs: 'repeat(2, 1fr)', sm: 'repeat(3, 1fr)', md: 'repeat(4, 1fr)', lg: 'repeat(5, 1fr)', xl: 'repeat(5, 1fr)' },
+          gap: 1.5
         }}>
           {filteredLooks.map((look) => (
           <Box
@@ -374,7 +349,7 @@ const Explore = () => {
                   component="img"
                   image={look.image}
                   alt={look.title}
-                  sx={{ height: 'auto', width: '100%' }}
+                  sx={{ height: 'auto', width: '100%', border: '2px solid #000000' }}
                 />
                 
                 {/* Overlay Actions */}
@@ -392,7 +367,11 @@ const Explore = () => {
                 >
                   <IconButton
                     size="small"
-                    sx={{ bgcolor: 'rgba(128,128,128,0.8)', '&:hover': { bgcolor: 'rgba(128,128,128,0.9)' } }}
+                    sx={{ 
+                      bgcolor: 'rgba(128,128,128,0.8)', 
+                      color: 'white',
+                      '&:hover': { bgcolor: 'rgba(128,128,128,0.9)' } 
+                    }}
                     onClick={(e) => {
                       e.stopPropagation()
                       handleShareLook(look)
@@ -402,9 +381,14 @@ const Explore = () => {
                   </IconButton>
                   <IconButton
                     size="small"
-                    sx={{ bgcolor: 'rgba(128,128,128,0.8)', '&:hover': { bgcolor: 'rgba(128,128,128,0.9)' } }}
+                    sx={{ 
+                      bgcolor: 'rgba(128,128,128,0.8)', 
+                      color: 'white',
+                      '&:hover': { bgcolor: 'rgba(128,128,128,0.9)' } 
+                    }}
                     onClick={(e) => {
                       e.stopPropagation()
+                      console.log('Delete button clicked for look:', look.id)
                       handleDeleteLook(look.id)
                     }}
                   >
@@ -431,45 +415,29 @@ const Explore = () => {
                 </IconButton>
               </Box>
 
-              <CardContent sx={{ p: 2, flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
-                <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
+              <CardContent sx={{ 
+                p: 0.25, 
+                display: 'flex', 
+                flexDirection: 'column', 
+                bgcolor: '#000000',
+                minHeight: '60px',
+                justifyContent: 'center'
+              }}>
+                <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '1.1rem', mb: 0.5, textAlign: 'center', color: '#ffffff' }}>
                   {look.title}
-                </Typography>
-                <Typography variant="body2" color="primary" sx={{ mb: 1, fontWeight: 500 }}>
-                  {look.sourceType}
-                </Typography>
-                <Typography variant="body2" color="textSecondary" sx={{ mb: 2, flexGrow: 1 }}>
-                  {look.description || look.notes || 'No description available'}
                 </Typography>
 
                 {/* Aesthetic Info */}
-                {look.aesthetic && look.aesthetic.length > 0 && (
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                    <Chip label={look.aesthetic[0]} size="small" color="secondary" />
-                    {look.aesthetic.length > 1 && (
-                      <Chip label={`+${look.aesthetic.length - 1} more`} size="small" variant="outlined" sx={{ ml: 1 }} />
-                    )}
-                  </Box>
-                )}
-
-                {/* Stats */}
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-                  <Typography variant="body2" color="textSecondary">
-                    {look.createdAt ? `Uploaded ${new Date(look.createdAt).toLocaleDateString()}` : 'Recently uploaded'}
-                  </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', ml: 1, mb: -1 }}>
+                  <Chip 
+                    label={look.aesthetic && look.aesthetic.length > 0 ? look.aesthetic[0] : 'Fashion'} 
+                    size="small" 
+                    sx={{ fontSize: '0.8rem', bgcolor: '#ffffff', color: '#000000' }} 
+                  />
+                  {look.aesthetic && look.aesthetic.length > 1 && (
+                    <Chip label={`+${look.aesthetic.length - 1} more`} size="small" variant="outlined" sx={{ ml: 0.5, fontSize: '0.8rem', borderColor: '#ffffff', color: '#ffffff' }} />
+                  )}
                 </Box>
-
-                {/* Tags */}
-                {look.tags && look.tags.length > 0 && (
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                    {look.tags.slice(0, 3).map((tag) => (
-                      <Chip key={tag} label={tag} size="small" variant="outlined" />
-                    ))}
-                    {look.tags.length > 3 && (
-                      <Chip label={`+${look.tags.length - 3}`} size="small" variant="outlined" />
-                    )}
-                  </Box>
-                )}
               </CardContent>
             </Card>
           </Box>
@@ -555,11 +523,11 @@ const Explore = () => {
               </Select>
             </FormControl>
 
-            <FormControl fullWidth>
-              <InputLabel>Aesthetic</InputLabel>
+            <FormControl fullWidth required>
+              <InputLabel>Aesthetic *</InputLabel>
               <Select
                 value={aiLookParams.aesthetic}
-                label="Aesthetic"
+                label="Aesthetic *"
                 onChange={(e) => setAILookParams({...aiLookParams, aesthetic: e.target.value})}
               >
                 <MenuItem value="minimalist">Minimalist</MenuItem>
@@ -580,7 +548,7 @@ const Explore = () => {
             onClick={handleGenerateAILook}
             variant="contained"
             color="secondary"
-            disabled={!aiLookParams.style || !aiLookParams.occasion || !aiLookParams.season || loading}
+            disabled={!aiLookParams.style || !aiLookParams.occasion || !aiLookParams.season || !aiLookParams.aesthetic || loading}
           >
             {loading ? 'Generating...' : 'Generate AI Look'}
           </Button>
@@ -602,7 +570,8 @@ const Explore = () => {
             
             <TextField
               fullWidth
-              label="Aesthetic (comma-separated)"
+              required
+              label="Aesthetic (comma-separated) *"
               value={uploadForm.aesthetic}
               onChange={(e) => setUploadForm({...uploadForm, aesthetic: e.target.value})}
               placeholder="e.g., luxury, elegant, spring"
@@ -652,7 +621,7 @@ const Explore = () => {
             onClick={handleUploadLook}
             variant="contained"
             color="secondary"
-            disabled={!uploadForm.title || !uploadForm.image || loading}
+            disabled={!uploadForm.title || !uploadForm.image || !uploadForm.aesthetic || loading}
           >
             {loading ? 'Uploading...' : 'Upload Look'}
           </Button>
